@@ -1,0 +1,8 @@
+build/
+build-*/
+result/
+*.tar.gz
+*.rpm
+*.src.rpm
+compile_commands.json
+.cache/
