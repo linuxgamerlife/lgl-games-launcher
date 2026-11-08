@@ -9,6 +9,7 @@
 #include "ui/themewatcher.h"
 
 #include <giomm/simpleaction.h>
+#include <glibmm/dispatcher.h>
 #include <gtkmm/aboutdialog.h>
 #include <gtkmm/application.h>
 #include <gtkmm/applicationwindow.h>
@@ -23,6 +24,7 @@
 #include <gtkmm/stack.h>
 
 #include <memory>
+#include <thread>
 #include <string>
 #include <vector>
 
@@ -40,6 +42,8 @@ private:
   void build_header();
   void apply_title_bar(bool system, bool runtime);
   void scan_and_load();
+  void fetch_missing_covers();
+  void apply_cached_covers();
   void show_notice(const std::string& text, bool error = false, bool sticky = false);
   void play(const std::string& app_id);
   void toggle_favorite(const std::string& app_id, bool favorite);
@@ -78,6 +82,8 @@ private:
   Glib::RefPtr<Gio::SimpleAction> m_title_action;
   gulong m_dark_handler = 0;
   sigc::connection m_notice_timeout;
+  Glib::Dispatcher m_artwork_dispatcher;
+  std::jthread m_artwork_thread;
 };
 
 } // namespace gameslauncher

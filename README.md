@@ -12,7 +12,8 @@
 LGL Games Launcher is a native GTK 4 game library for Fedora. The **current build is Steam-only**:
 it discovers installed Steam games from local manifests, shows them in a GTK library, provides
 search, sorting, favourites, hidden games, tags and a details page, and launches games through
-Steam or Flatpak Steam.
+Steam or Flatpak Steam. Missing portrait covers are fetched from Steam’s public CDN and cached
+locally.
 
 The wider Omakade feature set (other launchers, emulators, tracking, Game Mode, guide,
 highlights, save protection, backups and streaming) remains documented but is **not built**.

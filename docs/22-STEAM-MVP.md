@@ -26,8 +26,8 @@ documented.
 - Fields: app id, name, install dir, library path, manifest path, last played,
   playtime minutes, size on disk.
 - Exclude Steam runtimes/tools and entries without an install directory.
-- Local artwork only: `librarycache`, `appcache/librarycache`, `userdata/.../config/grid`.
-- No Steam Web API, no owned-library view, no network metadata in this MVP.
+- Local artwork: `librarycache`, `appcache/librarycache`, `userdata/.../config/grid`.
+- Missing portrait covers are fetched from Steam’s public CDN (`shared.steamstatic.com`) using only the numeric app id, then cached locally. No Steam Web API, no owned-library view, no metadata network calls.
 
 ### 1.2 Library and organisation
 
@@ -86,7 +86,7 @@ These remain in the design docs for later phases. They must not be presented as 
 - Grid renders, search/filter/sort work, details open, Play launches Steam.
 - Favourites/hidden/tags survive restart.
 - Missing Steam, malformed VDF/ACF and missing artwork do not crash.
-- No shell execution, no secrets, no network.
+- No shell execution, no secrets. The only network request is the fixed Steam CDN cover fallback.
 - Build passes with warnings as errors.
 - Automated tests are deferred for this MVP; the maintainer tests manually.
 - A snapshot smoke test may be added later if GTK capture is worth the setup.

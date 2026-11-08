@@ -1,5 +1,6 @@
 #include "ui/window.h"
 
+#include "core/artwork.h"
 #include "core/format.h"
 #include "core/launch.h"
 #include "core/paths.h"
@@ -28,6 +29,15 @@ Window::Window(const Glib::RefPtr<Gtk::Application>& application)
 
   m_theme.install();
   m_theme.signal_changed().connect([this] { update_dark_class(); });
+  m_artwork_dispatcher.connect([this] {
+    apply_cached_covers();
+    m_library.set_games(m_games);
+    if (!m_details.current_app_id().empty()) {
+      if (const Game* game = find_game(m_details.current_app_id())) {
+        m_details.set_game(*game);
+      }
+    }
+  });
 
   build_header();
 
@@ -99,6 +109,10 @@ Window::Window(const Glib::RefPtr<Gtk::Application>& application)
 }
 
 Window::~Window() {
+  if (m_artwork_thread.joinable()) {
+    m_artwork_thread.request_stop();
+    m_artwork_thread.join();
+  }
   if (m_dark_handler != 0) {
     auto* manager = adw_style_manager_get_default();
     if (manager != nullptr) {
@@ -212,12 +226,44 @@ void Window::apply_title_bar(bool system, bool runtime) {
 void Window::scan_and_load() {
   m_scan = SteamScanner::scan();
   m_games = load_games(m_scan, m_flags);
+  apply_cached_covers();
   m_library.set_games(m_games);
   if (!m_scan.warnings.empty()) {
     show_notice(m_scan.warnings.front(), true);
   } else if (m_games.empty()) {
     show_notice("No Steam games found. Check that Steam is installed and has a library.", true);
   }
+  fetch_missing_covers();
+}
+
+void Window::apply_cached_covers() {
+  for (Game& game : m_games) {
+    if (!game.steam.cover_path.empty()) {
+      continue;
+    }
+    const std::string cached = artwork::cached_cover_path(game.steam.app_id);
+    if (!cached.empty()) {
+      game.steam.cover_path = cached;
+    }
+  }
+}
+
+void Window::fetch_missing_covers() {
+  std::vector<std::string> missing;
+  for (const Game& game : m_games) {
+    if (game.steam.cover_path.empty()) {
+      missing.push_back(game.steam.app_id);
+    }
+  }
+  m_artwork_thread = std::jthread([this, missing = std::move(missing)](std::stop_token stop) {
+    for (const std::string& app_id : missing) {
+      if (stop.stop_requested()) {
+        return;
+      }
+      artwork::fetch_steam_cover(app_id, nullptr, nullptr);
+    }
+    m_artwork_dispatcher.emit();
+  });
 }
 
 void Window::refresh() {

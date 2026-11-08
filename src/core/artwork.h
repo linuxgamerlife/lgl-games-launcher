@@ -1,0 +1,15 @@
+#pragma once
+
+#include <string>
+
+namespace gameslauncher::artwork {
+
+// A locally cached Steam cover for an app, or empty when none is available.
+[[nodiscard]] std::string cached_cover_path(const std::string& app_id);
+
+// Fetches the portrait cover from Steam's public CDN and caches it. The app
+// id must be numeric. This is best effort: a failure returns false and leaves
+// no partial file behind. It never sends anything except the app id in the URL.
+bool fetch_steam_cover(const std::string& app_id, std::string* path, std::string* error);
+
+} // namespace gameslauncher::artwork

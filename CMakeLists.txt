@@ -28,6 +28,7 @@ pkg_check_modules(GTKMM REQUIRED IMPORTED_TARGET gtkmm-4.0>=4.20)
 pkg_check_modules(ADWAITA REQUIRED IMPORTED_TARGET libadwaita-1>=1.6)
 pkg_check_modules(GLIBMM REQUIRED IMPORTED_TARGET glibmm-2.68)
 pkg_check_modules(GIOMM REQUIRED IMPORTED_TARGET giomm-2.68)
+pkg_check_modules(LIBSOUP REQUIRED IMPORTED_TARGET libsoup-3.0)
 find_package(SQLite3 REQUIRED)
 find_program(GLIB_COMPILE_RESOURCES glib-compile-resources REQUIRED)
 
@@ -51,9 +52,10 @@ add_library(lgl_launcher_core STATIC
   src/core/launch.cpp
   src/core/theme.cpp
   src/core/format.cpp
+  src/core/artwork.cpp
 )
 target_include_directories(lgl_launcher_core PUBLIC ${PROJECT_SOURCE_DIR}/src)
-target_link_libraries(lgl_launcher_core PUBLIC PkgConfig::GLIBMM PkgConfig::GIOMM SQLite3::SQLite3)
+target_link_libraries(lgl_launcher_core PUBLIC PkgConfig::GLIBMM PkgConfig::GIOMM PkgConfig::LIBSOUP SQLite3::SQLite3)
 
 add_executable(lgl-games-launcher
   ${RESOURCE_C}

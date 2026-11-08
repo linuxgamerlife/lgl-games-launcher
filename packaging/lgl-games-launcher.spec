@@ -17,6 +17,7 @@ BuildRequires:  pkgconfig(libadwaita-1) >= 1.6
 BuildRequires:  pkgconfig(glib-2.0)
 BuildRequires:  pkgconfig(gio-2.0)
 BuildRequires:  pkgconfig(sqlite3)
+BuildRequires:  pkgconfig(libsoup-3.0)
 BuildRequires:  desktop-file-utils
 BuildRequires:  appstream
 
