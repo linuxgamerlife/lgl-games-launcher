@@ -2,7 +2,7 @@
 
 This document follows the LGL
 [Qt to GTK Repository Migration Standard](../../docs/qt-gtk-repo%20migration-standard.md).
-The target repository is `lgl-games-library`; the source is Omakade 1.18.0 at a pinned commit.
+The target repository is `lgl-games-launcher`; the source is Omakade 1.18.0 at a pinned commit.
 The migration has not started.
 
 ---
@@ -10,7 +10,7 @@ The migration has not started.
 ## 1. Target repository layout
 
 ```text
-lgl-games-library/
+lgl-games-launcher/
 ├── src/                 # maintained GTK application and non-UI C++
 │   ├── main.cpp
 │   ├── core/
@@ -69,7 +69,7 @@ attribution. The port is a derivative work; the GPL notices and CC BY-SA notice 
 
 Root `CMakeLists.txt`:
 
-1. Declare `project(lgl-games-library VERSION ... LANGUAGES C CXX)`.
+1. Declare `project(lgl-games-launcher VERSION ... LANGUAGES C CXX)`.
 2. Set C++20, warnings-as-errors, options, `CMAKE_EXPORT_COMPILE_COMMANDS`.
 3. Find GTK, gtkmm, libadwaita, JSON-GLib, SQLite, libsoup, libsecret, libzip, zstd, OpenSSL,
    SDL3, GdkPixbuf, Cairo, Pango.

@@ -31,9 +31,9 @@ ever changes, the privileged standard applies in full and this review must be re
 
 | Asset | Why it matters | Where it lives |
 | --- | --- | --- |
-| Library database | Personal game list, organisation, history | `$XDG_DATA_HOME/lgl-games-library/library.sqlite3` |
+| Library database | Personal game list, organisation, history | `$XDG_DATA_HOME/lgl-games-launcher/library.sqlite3` |
 | Play history | Personal behaviour over time | same database |
-| Save sets | Irreplaceable game progress | `$XDG_DATA_HOME/lgl-games-library/save-sets/` |
+| Save sets | Irreplaceable game progress | `$XDG_DATA_HOME/lgl-games-launcher/save-sets/` |
 | Backup archives | Portable personal data | user-chosen path |
 | Credentials | Account/API access | Secret Service only |
 | Secret Service session | Other apps' secrets | D-Bus session |

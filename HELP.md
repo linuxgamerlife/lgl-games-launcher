@@ -1,4 +1,4 @@
-# LGL Games Library help
+# LGL Games Launcher help
 
 > **Draft for the design phase.** The application is not implemented. This file is the outline
 > for the packaged user help and must be completed when the corresponding features ship.

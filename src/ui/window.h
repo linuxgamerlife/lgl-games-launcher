@@ -1,0 +1,83 @@
+#pragma once
+
+#include "core/flags_store.h"
+#include "core/library.h"
+#include "core/settings.h"
+#include "core/steam.h"
+#include "ui/details_view.h"
+#include "ui/library_view.h"
+#include "ui/themewatcher.h"
+
+#include <giomm/simpleaction.h>
+#include <gtkmm/aboutdialog.h>
+#include <gtkmm/application.h>
+#include <gtkmm/applicationwindow.h>
+#include <gtkmm/box.h>
+#include <gtkmm/button.h>
+#include <gtkmm/headerbar.h>
+#include <gtkmm/image.h>
+#include <gtkmm/label.h>
+#include <gtkmm/menubutton.h>
+#include <gtkmm/overlay.h>
+#include <gtkmm/revealer.h>
+#include <gtkmm/stack.h>
+
+#include <memory>
+#include <string>
+#include <vector>
+
+namespace gameslauncher {
+
+class Window final : public Gtk::ApplicationWindow {
+public:
+  explicit Window(const Glib::RefPtr<Gtk::Application>& application);
+  ~Window() override;
+
+  void open_game(const std::string& app_id);
+  void refresh();
+
+private:
+  void build_header();
+  void apply_title_bar(bool system, bool runtime);
+  void scan_and_load();
+  void show_notice(const std::string& text, bool error = false, bool sticky = false);
+  void play(const std::string& app_id);
+  void toggle_favorite(const std::string& app_id, bool favorite);
+  void toggle_hidden(const std::string& app_id, bool hidden);
+  void set_tags(const std::string& app_id, const std::string& tags);
+  void update_game_flags(const std::string& app_id, const GameFlags& flags);
+  void show_about();
+  void update_dark_class();
+  [[nodiscard]] Game* find_game(const std::string& app_id);
+  [[nodiscard]] const Game* find_game(const std::string& app_id) const;
+
+  static void on_style_manager_dark(GObject* object, GParamSpec* spec, gpointer data);
+
+  Gtk::HeaderBar m_header;
+  Gtk::Box m_logo;
+  Gtk::Image m_icon;
+  Gtk::Label m_wordmark;
+  Gtk::Button m_refresh_button;
+  Gtk::MenuButton m_menu_button;
+  Gtk::Box m_content;
+  Gtk::Overlay m_overlay;
+  Gtk::Revealer m_notice_revealer;
+  Gtk::Label m_notice;
+  Gtk::Stack m_stack;
+  LibraryView m_library;
+  DetailsView m_details;
+  std::unique_ptr<Gtk::AboutDialog> m_about;
+
+  Settings m_settings;
+  FlagsStore m_flags;
+  SteamScanResult m_scan;
+  std::vector<Game> m_games;
+  ThemeWatcher m_theme;
+
+  bool m_system_title_bar = false;
+  Glib::RefPtr<Gio::SimpleAction> m_title_action;
+  gulong m_dark_handler = 0;
+  sigc::connection m_notice_timeout;
+};
+
+} // namespace gameslauncher

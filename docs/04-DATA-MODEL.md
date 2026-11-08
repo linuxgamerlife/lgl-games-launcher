@@ -10,14 +10,14 @@ document: all stored data is untrusted on read.
 
 | Purpose | Path | Mode | Notes |
 | --- | --- | --- | --- |
-| Settings | `$XDG_CONFIG_HOME/lgl-games-library/settings.ini` | 0600 | `Glib::KeyFile`; one group per area |
-| Library database | `$XDG_DATA_HOME/lgl-games-library/library.sqlite3` | 0600 | SQLite; WAL side files |
-| User artwork | `$XDG_DATA_HOME/lgl-games-library/artwork/` | 0700 | Content-addressed copies |
-| Save sets | `$XDG_DATA_HOME/lgl-games-library/save-sets/` | 0700 | Journals and versions |
+| Settings | `$XDG_CONFIG_HOME/lgl-games-launcher/settings.ini` | 0600 | `Glib::KeyFile`; one group per area |
+| Library database | `$XDG_DATA_HOME/lgl-games-launcher/library.sqlite3` | 0600 | SQLite; WAL side files |
+| User artwork | `$XDG_DATA_HOME/lgl-games-launcher/artwork/` | 0700 | Content-addressed copies |
+| Save sets | `$XDG_DATA_HOME/lgl-games-launcher/save-sets/` | 0700 | Journals and versions |
 | Library backups | user-chosen | user | `.omakade-backup` compatible |
-| Artwork/metadata cache | `$XDG_CACHE_HOME/lgl-games-library/` | 0700 | Bounded, regenerable |
-| Runtime socket | `$XDG_RUNTIME_DIR/lgl-games-library/control.sock` | 0600 | Directory 0700 |
-| Optional clips | `$XDG_VIDEOS_DIR/LGL Games Library/` | user | P2/P3 only |
+| Artwork/metadata cache | `$XDG_CACHE_HOME/lgl-games-launcher/` | 0700 | Bounded, regenerable |
+| Runtime socket | `$XDG_RUNTIME_DIR/lgl-games-launcher/control.sock` | 0600 | Directory 0700 |
+| Optional clips | `$XDG_VIDEOS_DIR/LGL Games Launcher/` | user | P2/P3 only |
 | Logs | stderr/journal | — | No secrets or personal data |
 
 `XDG_*` variables are resolved with GLib. If a variable is unset, use the GLib default

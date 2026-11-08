@@ -1,0 +1,12 @@
+[Desktop Entry]
+Type=Application
+Name=LGL Games Launcher
+GenericName=Game Library
+Comment=A local Steam library for Fedora
+Exec=lgl-games-launcher
+Icon=lgl-games-launcher
+Terminal=false
+Categories=Game;
+Keywords=Games;Steam;Library;Launcher;
+StartupNotify=true
+StartupWMClass=com.linuxgamerlife.lgl-games-launcher

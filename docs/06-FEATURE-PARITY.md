@@ -135,7 +135,7 @@ by review, grep-based CI and tests.
 
 | Feature | Decision | Phase | Notes |
 | --- | --- | --- | --- |
-| Separate recorder daemon | Port | P0 | `lgl-games-library-sessiond` |
+| Separate recorder daemon | Port | P0 | `lgl-games-launcher-sessiond` |
 | Process matching profiles | Port | P0 | `/proc` + emulator profiles |
 | Session open/extend/close | Port | P0 | Monotonic time; 5 s poll |
 | Durable journal / replay | Port | P0 | Refused writes survive restart |

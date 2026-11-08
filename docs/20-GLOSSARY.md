@@ -3,7 +3,7 @@
 | Term | Meaning |
 | --- | --- |
 | **ADR** | Architecture decision record; a dated, binding decision with alternatives and consequences. |
-| **App ID** | `com.linuxgamerlife.lgl-games-library`; the desktop/application identity. |
+| **App ID** | `com.linuxgamerlife.lgl-games-launcher`; the desktop/application identity. |
 | **Backup archive** | `.omakade-backup` ZIP containing personal library data and artwork, not ROMs/saves/credentials. |
 | **Core** | `src/core`; widget-free domain logic, testable without a display. |
 | **CTest** | CMake’s test runner; registers the `g_test` executables and UI/snapshot tests. |
@@ -24,8 +24,8 @@
 | **Primary input** | The widget that receives focus when the user returns to the window. |
 | **RPM/COPR** | Fedora package format and build service; the 1.0 packaging target. |
 | **Save set** | A versioned, hashed snapshot of an emulator’s save files, with a restore journal. |
-| **sessiond** | `lgl-games-library-sessiond`; the separate user service that records play sessions. |
-| **Snapshot test** | Offscreen render of windows to PNG via `LGL_GAMES_LIBRARY_GTK_SNAPSHOT`. |
+| **sessiond** | `lgl-games-launcher-sessiond`; the separate user service that records play sessions. |
+| **Snapshot test** | Offscreen render of windows to PNG via `LGL_GAMES_LAUNCHER_GTK_SNAPSHOT`. |
 | **Source** | A launcher/emulator integration (Steam, Heroic, RetroArch, …). |
 | **Spike** | A short, throwaway experiment to prove a platform assumption before scheduling work. |
 | **TB** | Trust boundary in [09-Security](09-SECURITY.md). |

@@ -13,17 +13,17 @@ Status: draft for approval.
 
 | Item | Value |
 | --- | --- |
-| Application ID | `com.linuxgamerlife.lgl-games-library` |
-| Binary / icon / config | `lgl-games-library` |
-| Display name | `LGL Games Library` |
-| Wordmark | `LGL GAMES LIBRARY` |
-| Desktop / metainfo | `com.linuxgamerlife.lgl-games-library.desktop`, `.metainfo.xml` |
-| GResource prefix | `/com/linuxgamerlife/gameslibrary/` |
-| C++ namespace | `gameslibrary` |
+| Application ID | `com.linuxgamerlife.lgl-games-launcher` |
+| Binary / icon / config | `lgl-games-launcher` |
+| Display name | `LGL Games Launcher` |
+| Wordmark | `LGL GAMES LAUNCHER` |
+| Desktop / metainfo | `com.linuxgamerlife.lgl-games-launcher.desktop`, `.metainfo.xml` |
+| GResource prefix | `/com/linuxgamerlife/gameslauncher/` |
+| C++ namespace | `gameslauncher` |
 | CSS prefix | `gl-` for classes, `@gl_` for derived colours |
-| CMake / env prefix | `LGL_GAMES_LIBRARY` |
+| CMake / env prefix | `LGL_GAMES_LAUNCHER` |
 
-Window title: `LGL Games Library`. Use `Glib::set_application_name()` and
+Window title: `LGL Games Launcher`. Use `Glib::set_application_name()` and
 `Gtk::Window::set_default_icon_name()` in `startup`.
 
 ---
@@ -32,7 +32,7 @@ Window title: `LGL Games Library`. Use `Glib::set_application_name()` and
 
 ```text
 ┌──────────────────────────────────────────────────────────────────────┐
-│ [icon] LGL GAMES LIBRARY   [Library] [Stats]        [Search]  [☰] [×] │  header
+│ [icon] LGL GAMES LAUNCHER   [Library] [Stats]        [Search]  [☰] [×] │  header
 ├──────────────────────────────────────────────────────────────────────┤
 │  sidebar / filters        │  page content                             │
 │  (sources, collections)   │                                           │
@@ -92,7 +92,7 @@ Sections, in order:
 3. **Help**
    - Help (`F1`)
    - Diagnostics… (source status, compositor capabilities, database path)
-   - About LGL Games Library
+   - About LGL Games Launcher
 4. **Quit** (`Ctrl+Q`)
 
 Items that open a dialog or picker end with `…`. Menu actions use named `win.*`/`app.*`
@@ -356,8 +356,8 @@ transient for and modal to the main window.
 
 | Field | Value |
 | --- | --- |
-| Program name | LGL Games Library |
-| Version | `LGL_GAMES_LIBRARY_VERSION` |
+| Program name | LGL Games Launcher |
+| Version | `LGL_GAMES_LAUNCHER_VERSION` |
 | Comments | “One local library for the games you already own.” then a blank line and “Built with GTK 4 and libadwaita.” |
 | Website | project page, label `Project page and issue tracker` |
 | Authors | LinuxGamerLife and the Omakade contributors; original Omakade by Tyler South |
@@ -436,7 +436,7 @@ laptop.
 
 ## 13. Snapshot smoke test
 
-Support `LGL_GAMES_LIBRARY_GTK_SNAPSHOT=<folder>`:
+Support `LGL_GAMES_LAUNCHER_GTK_SNAPSHOT=<folder>`:
 
 - run `NON_UNIQUE` so the app does not hand off to a running instance;
 - render every visible window to `<folder>/<title>.png` after 3 seconds, replacing

@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>com.linuxgamerlife.lgl-games-launcher</id>
+  <name>LGL Games Launcher</name>
+  <summary>A local Steam library for Fedora</summary>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>GPL-3.0-or-later</project_license>
+  <developer id="com.linuxgamerlife">
+    <name>LinuxGamerLife</name>
+  </developer>
+  <description>
+    <p>
+      LGL Games Launcher discovers installed Steam games from local manifests,
+      presents them in a GTK library, and launches them through Steam or the
+      Flatpak Steam client.
+    </p>
+    <p>
+      This is the Steam-only MVP. Other launchers, emulators, playtime
+      recording, Game Mode, saves, backups and streaming are not part of this
+      build.
+    </p>
+  </description>
+  <launchable type="desktop-id">com.linuxgamerlife.lgl-games-launcher.desktop</launchable>
+  <url type="homepage">https://github.com/linuxgamerlife/lgl-games-launcher</url>
+  <content_rating type="oars-1.1" />
+  <releases>
+    <release version="0.1.0" date="2026-11-08">
+      <description>
+        <p>Initial Steam-only MVP: discovery, library browsing, details and launch.</p>
+      </description>
+    </release>
+  </releases>
+</component>

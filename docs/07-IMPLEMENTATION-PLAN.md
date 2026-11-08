@@ -76,10 +76,10 @@ theme, shows an empty library, and passes its first tests. No sources yet.
 1. **Repository and build**
    - Root `CMakeLists.txt`, `Makefile`, `.copr/Makefile`.
    - `data/` GResource: `style.css`, app icon, empty-state strings.
-   - `LGL_GAMES_LIBRARY_VERSION`, sanitizer option, warnings as errors.
+   - `LGL_GAMES_LAUNCHER_VERSION`, sanitizer option, warnings as errors.
    - `.clang-format`, `.clang-tidy`, `.gitignore`, CI workflow.
 2. **Application shell**
-   - `main.cpp`, `Gtk::Application`, `gameslibrary::Window`.
+   - `main.cpp`, `Gtk::Application`, `gameslauncher::Window`.
    - Header bar, logo, wordmark, main menu, About, Help placeholder.
    - Both title bar modes and Ctrl+Shift+M.
    - Alt menu behaviour, standard shortcuts, notices overlay.
@@ -103,7 +103,7 @@ theme, shows an empty library, and passes its first tests. No sources yet.
    - Capability probe for KineticWE/Noctalia and a Diagnostics page.
 7. **Test and snapshot harness**
    - `settings_test`, `theme_test`, `paths_test`, `db_test`.
-   - `LGL_GAMES_LIBRARY_GTK_SNAPSHOT` smoke test.
+   - `LGL_GAMES_LAUNCHER_GTK_SNAPSHOT` smoke test.
    - CI builds Debug and Release with GCC and Clang in Fedora 44.
 
 ### Exit criteria

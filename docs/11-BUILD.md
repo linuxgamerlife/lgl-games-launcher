@@ -87,7 +87,7 @@ Sanitizers:
 cmake -S . -B build-asan -G Ninja \
   -DCMAKE_BUILD_TYPE=Debug \
   -DBUILD_TESTING=ON \
-  -DLGL_GAMES_LIBRARY_ENABLE_SANITIZERS=ON
+  -DLGL_GAMES_LAUNCHER_ENABLE_SANITIZERS=ON
 cmake --build build-asan -j"$(nproc)"
 ctest --test-dir build-asan --output-on-failure
 ```
@@ -150,7 +150,7 @@ Root:
 
 ```cmake
 cmake_minimum_required(VERSION 3.20)
-project(lgl-games-library VERSION 0.1.0 LANGUAGES C CXX)
+project(lgl-games-launcher VERSION 0.1.0 LANGUAGES C CXX)
 include(CTest)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
@@ -164,9 +164,9 @@ install rules and tests.
 Rules:
 
 - `-Wall -Wextra -Wpedantic -Werror` for C++ (GCC and Clang). Generated resource C is `-w`.
-- `LGL_GAMES_LIBRARY_ENABLE_SANITIZERS` adds `-fsanitize=address,undefined
+- `LGL_GAMES_LAUNCHER_ENABLE_SANITIZERS` adds `-fsanitize=address,undefined
   -fno-omit-frame-pointer` and link options.
-- `LGL_GAMES_LIBRARY_VERSION="${PROJECT_VERSION}"` compile definition for About.
+- `LGL_GAMES_LAUNCHER_VERSION="${PROJECT_VERSION}"` compile definition for About.
 - Resources compiled with `glib-compile-resources` from `data/`.
 - Install binary, desktop file, metainfo, hicolor icons, user units, docs, licences.
 - `install(DIRECTORY ...)` paths use `GNUInstallDirs`.

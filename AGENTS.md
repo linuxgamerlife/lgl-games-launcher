@@ -1,13 +1,13 @@
-# AGENTS.md — LGL Games Library
+# AGENTS.md — LGL Games Launcher
 
 These rules apply to every AI agent or human contributor in this repository. They override
 conflicting defaults.
 
 ## 1. Status
 
-This repository is in the **design phase**. There is no application code. Do not build,
-install, package or claim the app works. The deliverable is documentation until the maintainer
-approves Phase 1.
+This repository is building the **Steam-only MVP** described in `docs/22-STEAM-MVP.md`.
+The initial build covers Steam discovery, library browsing/organisation, details and launch.
+Everything else is documented but deferred. Do not claim deferred features work.
 
 ## 2. Plan first
 
@@ -62,7 +62,9 @@ If a task seems to require one, stop and escalate to the maintainer.
 ## 7. Verification
 
 - Docs-only changes: check links, paths and consistency; no build.
-- Code changes (after approval):
+- **Steam MVP:** automated tests are deferred; the maintainer tests manually. Still build in
+  `fedora-dev1` before reporting code as working.
+- Later code changes (after approval):
   - `cmake -S . -B build -DBUILD_TESTING=ON && cmake --build build && ctest --test-dir build --output-on-failure`
   - GCC and Clang; warnings as errors; ASan/UBSan for security-relevant code.
   - Run `clang-tidy`, `cppcheck`, `clang-format --dry-run -Werror`.

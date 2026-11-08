@@ -1,6 +1,6 @@
 # 02 — Product scope
 
-This document defines what LGL Games Library is, who it is for, what ships in each release
+This document defines what LGL Games Launcher is, who it is for, what ships in each release
 tier, and what is explicitly out of scope. It is the authority for “is this in the port?”
 questions.
 
@@ -10,7 +10,7 @@ Status: draft for approval, 2026-11-08.
 
 ## 1. Product statement
 
-LGL Games Library is a local-first game library for Fedora. It collects installed games
+LGL Games Launcher is a local-first game library for Fedora. It collects installed games
 from the launchers and emulators the user already uses, presents one consistent library,
 and starts each game through the platform that owns it. It never installs, updates, cracks
 or manages games itself. Accounts, downloads, DRM, cloud saves and compatibility settings
@@ -82,7 +82,7 @@ The smallest release that is genuinely useful.
 - Game details with local artwork, installation path, source and a Play button.
 - Launch through the owning launcher, emulator or direct command; Flatpak launch support.
 - Single instance and command-line activation.
-- Play-session tracking through the separate `lgl-games-library-sessiond` service, with
+- Play-session tracking through the separate `lgl-games-launcher-sessiond` service, with
   per-game totals and a basic statistics page.
 - Settings persisted in `settings.ini`; import from Omakade `config.toml`.
 - Import an existing Omakade library database and artwork cache.
@@ -185,14 +185,14 @@ as “not detected” in settings with a short explanation.
 
 | Data | Location | Notes |
 | --- | --- | --- |
-| Settings | `$XDG_CONFIG_HOME/lgl-games-library/settings.ini` | `Glib::KeyFile`; one typed getter/setter per key |
-| Library database | `$XDG_DATA_HOME/lgl-games-library/library.sqlite3` | SQLite, WAL, shared with sessiond |
-| Artwork overrides | `$XDG_DATA_HOME/lgl-games-library/artwork/` | User-selected images, content-addressed |
-| Save sets | `$XDG_DATA_HOME/lgl-games-library/save-sets/` | Bounded, journalled |
+| Settings | `$XDG_CONFIG_HOME/lgl-games-launcher/settings.ini` | `Glib::KeyFile`; one typed getter/setter per key |
+| Library database | `$XDG_DATA_HOME/lgl-games-launcher/library.sqlite3` | SQLite, WAL, shared with sessiond |
+| Artwork overrides | `$XDG_DATA_HOME/lgl-games-launcher/artwork/` | User-selected images, content-addressed |
+| Save sets | `$XDG_DATA_HOME/lgl-games-launcher/save-sets/` | Bounded, journalled |
 | Backups | user-selected path | `.omakade-backup` compatible |
-| Cover/artwork cache | `$XDG_CACHE_HOME/lgl-games-library/` | Bounded by a setting |
-| Runtime socket | `$XDG_RUNTIME_DIR/lgl-games-library/` | Mode 0700 directory; 0600 socket |
-| Clips (P2) | `$XDG_VIDEOS_DIR/LGL Games Library/<game>/` | Only if highlights are enabled |
+| Cover/artwork cache | `$XDG_CACHE_HOME/lgl-games-launcher/` | Bounded by a setting |
+| Runtime socket | `$XDG_RUNTIME_DIR/lgl-games-launcher/` | Mode 0700 directory; 0600 socket |
+| Clips (P2) | `$XDG_VIDEOS_DIR/LGL Games Launcher/<game>/` | Only if highlights are enabled |
 | Logs | stderr/journal | No secrets, no personal paths beyond what is needed |
 
 Existing Omakade data is imported, never written in place. See
@@ -277,7 +277,7 @@ These require a decision before the phase that depends on them. Track them in
 | --- | --- | --- |
 | Q1 | Which KineticWE API is stable enough to depend on: KWin D-Bus methods, a bundled KWin script, or both? | P0 architecture |
 | Q2 | Is a source-compatible fork acceptable, or must imports be one-way only? | P0 data model |
-| Q3 | Should the app id be `com.linuxgamerlife.lgl-games-library` or a shorter existing brand? | P0 identity |
+| Q3 | Should the app id be `com.linuxgamerlife.lgl-games-launcher` or a shorter existing brand? | P0 identity |
 | Q4 | Is Game Mode a 1.0 requirement or a post-1.0 feature? | P1 planning |
 | Q5 | Are achievements required for 1.0, or can they be a later optional connection? | P1 planning |
 | Q6 | Is Flatpak support a goal at all, given host launcher access? | Packaging |

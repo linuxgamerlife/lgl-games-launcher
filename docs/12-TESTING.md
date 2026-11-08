@@ -25,7 +25,7 @@ fixtures and expected outcomes.
 | Core integration | scanners + SQLite, backup, saves, recorder | `g_test` + temp dirs | every build |
 | Process integration | argv, subprocess, single instance, daemon | `g_test` + fake programs | every build |
 | UI model | filters, sort, selection, focus contract | `g_test` + offscreen GTK | CI |
-| UI snapshot | rendered windows | `LGL_GAMES_LIBRARY_GTK_SNAPSHOT` + Xvfb | CI |
+| UI snapshot | rendered windows | `LGL_GAMES_LAUNCHER_GTK_SNAPSHOT` + Xvfb | CI |
 | Security | malicious input, limits, redaction | `g_test` + fuzz | every build / nightly |
 | Performance | 1k/10k libraries, scan, startup | benchmark executable | milestone |
 | Manual | real launchers, gamepad, KineticWE/Noctalia | checklist | release gate |
@@ -82,7 +82,7 @@ Tests that need a display, a tool or a session call `g_test_skip()` and are regi
 - A test that needs a real launcher/emulator skips when it is absent and says why.
 - Tests are deterministic: injected clocks, no sleeps where an event can be awaited, bounded
   timeouts.
-- Each test cleans its temp root; a failure may keep it under `LGL_GAMES_LIBRARY_KEEP_TEST_TMP=1`.
+- Each test cleans its temp root; a failure may keep it under `LGL_GAMES_LAUNCHER_KEEP_TEST_TMP=1`.
 
 ---
 
@@ -254,7 +254,7 @@ tracked with an owner.
 
 ## 8. Snapshot and visual testing
 
-`LGL_GAMES_LIBRARY_GTK_SNAPSHOT=<folder>`:
+`LGL_GAMES_LAUNCHER_GTK_SNAPSHOT=<folder>`:
 
 - run `NON_UNIQUE`;
 - wait 3 seconds for rendering;

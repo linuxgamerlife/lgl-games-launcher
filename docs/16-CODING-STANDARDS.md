@@ -25,7 +25,7 @@ Security rules in [09-Security](09-SECURITY.md) override convenience.
 - Functions/methods: `camelCase` (`loadSettings`, `scanSteam`).
 - Members: `m_camelCase`.
 - Constants: `kCamelCase` for compile-time values, `UPPER_SNAKE` only for macros.
-- Namespaces: `gameslibrary`; sub-namespaces `gameslibrary::core`, `::platform`, `::ui`.
+- Namespaces: `gameslauncher`; sub-namespaces `gameslauncher::core`, `::platform`, `::ui`.
 - Files: `snake_case.h/.cpp`, one primary type per file.
 - GTK/GLib C types keep their C names at the boundary; wrap them in RAII early.
 - Prefer descriptive names over abbreviations. No Hungarian notation.
@@ -195,7 +195,7 @@ Security rules in [09-Security](09-SECURITY.md) override convenience.
 
 ## 13. Logging
 
-- `g_message`/`g_warning`/`g_critical` with `LGL_GAMES_LIBRARY` log domain.
+- `g_message`/`g_warning`/`g_critical` with `LGL_GAMES_LAUNCHER` log domain.
 - One line per operation: what, target (redacted), result, bounded error.
 - No secrets, tokens, cookies, ROM keys, save contents or full personal paths.
 - A user-visible message is short; details go to the log.

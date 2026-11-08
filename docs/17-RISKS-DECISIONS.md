@@ -47,13 +47,13 @@ tables.
 ### ADR-004 — `settings.ini` with a TOML importer
 
 **Decision:** new settings use `Glib::KeyFile` at
-`$XDG_CONFIG_HOME/lgl-games-library/settings.ini`; import `omakade/config.toml` once.
+`$XDG_CONFIG_HOME/lgl-games-launcher/settings.ini`; import `omakade/config.toml` once.
 
 **Reason:** LGL GTK standard. TOML remains only as an import format.
 
 ### ADR-005 — Separate session daemon
 
-**Decision:** keep `lgl-games-library-sessiond` as a systemd user service with its own SQLite
+**Decision:** keep `lgl-games-launcher-sessiond` as a systemd user service with its own SQLite
 connection, lock and durable journal.
 
 **Reason:** recording must continue with the window closed and must not stall the UI.
@@ -148,7 +148,7 @@ Probability/impact: H/M/L. Owner is the role, not a person.
 | --- | --- | --- | --- |
 | Q1 | If KineticWE later provides a supported overlay surface, what design and security review is required for the guide? | Guide stays unavailable | Post-1.0 |
 | Q2 | Which KWin API is stable enough: D-Bus methods only, or bundled script too? | Script for window moves, D-Bus for outputs/desktops | Phase 6 |
-| Q3 | Is the app id `com.linuxgamerlife.lgl-games-library` approved? | Use it | Phase 1 |
+| Q3 | Is the app id `com.linuxgamerlife.lgl-games-launcher` approved? | Use it | Phase 1 |
 | Q4 | Is Game Mode a 1.0 requirement? | Yes for current display; dedicated display conditional | Phase 6 |
 | Q5 | Are achievements required for 1.0? | P1, not a 1.0 blocker | Phase 4 |
 | Q6 | Is Flatpak a goal? | Deferred | Packaging |

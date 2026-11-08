@@ -17,11 +17,11 @@ Status meanings: **Planned** (design meets it), **Deviation** (documented differ
 | Language/build | C++20, CMake 3.20+, GResource | Planned | [11-Build](11-BUILD.md) |
 | Tests | GLib `g_test` via CTest | Planned | [12-Testing](12-TESTING.md) |
 | Packaging | RPM on COPR | Planned | [13-Packaging](13-PACKAGING.md) |
-| App ID | `com.linuxgamerlife.lgl-games-library` | Planned | [05-UI](05-UI-SPEC.md) |
-| Binary/icon/config | `lgl-games-library` | Planned | [05-UI](05-UI-SPEC.md) |
-| Display/wordmark | `LGL Games Library` / `LGL GAMES LIBRARY` | Planned | [05-UI](05-UI-SPEC.md) |
-| GResource prefix | `/com/linuxgamerlife/gameslibrary/` | Planned | [03-Architecture](03-ARCHITECTURE.md) |
-| Namespace/CSS prefix | `gameslibrary` / `gl-`, `@gl_` | Planned | [05-UI](05-UI-SPEC.md) |
+| App ID | `com.linuxgamerlife.lgl-games-launcher` | Planned | [05-UI](05-UI-SPEC.md) |
+| Binary/icon/config | `lgl-games-launcher` | Planned | [05-UI](05-UI-SPEC.md) |
+| Display/wordmark | `LGL Games Launcher` / `LGL GAMES LAUNCHER` | Planned | [05-UI](05-UI-SPEC.md) |
+| GResource prefix | `/com/linuxgamerlife/gameslauncher/` | Planned | [03-Architecture](03-ARCHITECTURE.md) |
+| Namespace/CSS prefix | `gameslauncher` / `gl-`, `@gl_` | Planned | [05-UI](05-UI-SPEC.md) |
 | Project layout | root GTK app, `src/core` widget-free, `src/ui` | Planned | [03-Architecture](03-ARCHITECTURE.md) |
 | Legacy sources | `legacy/qt/` not built | Planned | [15-Migration](15-MIGRATION.md) |
 | Lifecycle | one Gtk::Application, window in `main`, standard startup order | Planned | [05-UI](05-UI-SPEC.md) |
@@ -44,11 +44,11 @@ Status meanings: **Planned** (design meets it), **Deviation** (documented differ
 | External tools | Gio::Subprocess, argv, timeout | Planned | [09-Security](09-SECURITY.md) |
 | Warnings/sanitizers | -Werror, ASan/UBSan option | Planned | [11-Build](11-BUILD.md) |
 | Tests | settings_test, theme_test, skip 77 | Planned | [12-Testing](12-TESTING.md) |
-| Snapshot | `LGL_GAMES_LIBRARY_GTK_SNAPSHOT` | Planned | [12-Testing](12-TESTING.md) |
+| Snapshot | `LGL_GAMES_LAUNCHER_GTK_SNAPSHOT` | Planned | [12-Testing](12-TESTING.md) |
 | Packaging | spec, COPR, Makefile, icons, metainfo | Planned | [13-Packaging](13-PACKAGING.md) |
 | Compliance record | this document | Planned | — |
 
-**Deviation D-01:** the app’s data directory (`$XDG_DATA_HOME/lgl-games-library/`) is required
+**Deviation D-01:** the app’s data directory (`$XDG_DATA_HOME/lgl-games-launcher/`) is required
 for the library database, artwork and save sets. The standard’s settings/history table does not
 name a data directory; this is an extension, not a conflict. Documented in
 [04-Data model](04-DATA-MODEL.md).

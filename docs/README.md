@@ -30,6 +30,7 @@ otherwise.
 | 19 | [Acceptance criteria](19-ACCEPTANCE-CRITERIA.md) | Definition of done and release gates | maintainers, reviewers |
 | 20 | [Glossary](20-GLOSSARY.md) | Terms used across the documents | everyone |
 | 21 | [Guide overlay blocker](21-GUIDE-OVERLAY-BLOCKER.md) | Why the in-game guide is unavailable on KineticWE | everyone |
+| 22 | [Steam-only MVP](22-STEAM-MVP.md) | The current build scope: Steam + sections 1–4 only | implementers |
 
 ## Source standards
 

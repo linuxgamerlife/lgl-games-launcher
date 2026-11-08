@@ -12,14 +12,14 @@ controls it. It is written for users and reviewers. Security controls are in
 
 | Data | Location | Why | Removable |
 | --- | --- | --- | --- |
-| Settings | `$XDG_CONFIG_HOME/lgl-games-library/settings.ini` | Remember choices | yes |
-| Library database | `$XDG_DATA_HOME/lgl-games-library/library.sqlite3` | Games, organisation, history, caches | yes |
-| Custom artwork | `$XDG_DATA_HOME/lgl-games-library/artwork/` | User-chosen images | yes, per item |
-| Save sets | `$XDG_DATA_HOME/lgl-games-library/save-sets/` | Emulator save versions | yes, per set |
+| Settings | `$XDG_CONFIG_HOME/lgl-games-launcher/settings.ini` | Remember choices | yes |
+| Library database | `$XDG_DATA_HOME/lgl-games-launcher/library.sqlite3` | Games, organisation, history, caches | yes |
+| Custom artwork | `$XDG_DATA_HOME/lgl-games-launcher/artwork/` | User-chosen images | yes, per item |
+| Save sets | `$XDG_DATA_HOME/lgl-games-launcher/save-sets/` | Emulator save versions | yes, per set |
 | Backups | user-chosen path | Portable personal data | yes |
-| Artwork/metadata cache | `$XDG_CACHE_HOME/lgl-games-library/` | Fast offline display | yes |
-| Clips (P3) | `$XDG_VIDEOS_DIR/LGL Games Library/` | Saved highlights | yes |
-| Runtime socket | `$XDG_RUNTIME_DIR/lgl-games-library/` | Single instance, daemons | automatic |
+| Artwork/metadata cache | `$XDG_CACHE_HOME/lgl-games-launcher/` | Fast offline display | yes |
+| Clips (P3) | `$XDG_VIDEOS_DIR/LGL Games Launcher/` | Saved highlights | yes |
+| Runtime socket | `$XDG_RUNTIME_DIR/lgl-games-launcher/` | Single instance, daemons | automatic |
 | Logs | stderr/journal | Diagnosis | by the user’s journal policy |
 
 The library database includes:

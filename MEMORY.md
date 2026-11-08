@@ -1,8 +1,9 @@
-# LGL Games Library — project memory
+# LGL Games Launcher — project memory
 
 ## State
 
-- Design phase only. No application code, no build, no release.
+- Building the **Steam-only MVP** in `docs/22-STEAM-MVP.md`: sections 1–4 only (discovery,
+  library, details, launch). Everything else is deferred.
 - Source lineage: Omakade 1.18.0 (Qt 6/QML, GPL-3.0-or-later, Copyright (C) 2026 Tyler South).
 - Target: Fedora 44+, GTK 4/gtkmm 4.20+, C++20, KineticWE (KWin fork) + Noctalia.
 - The Qt tree will be archived under `legacy/qt/` when implementation starts; it is never
@@ -16,7 +17,7 @@
 - KineticWE + Noctalia is the design target; other Wayland sessions degrade explicitly.
 - SQLite schema and `.omakade-backup` v1/v2 are compatibility contracts.
 - `settings.ini` replaces `config.toml`; a one-way importer runs on first use.
-- Separate `lgl-games-library-sessiond` user service with its own SQLite connection and journal.
+- Separate `lgl-games-launcher-sessiond` user service with its own SQLite connection and journal.
 - No root helper, no shell, argv-only launch, Secret Service only for secrets.
 - The in-game guide overlay is unavailable: KineticWE does not provide `zwlr_layer_shell_v1`
   to clients. Do not add `gtk4-layer-shell` or claim an overlay works.
@@ -45,6 +46,7 @@
 - `docs/19-ACCEPTANCE-CRITERIA.md` — definition of done and release gates.
 - `docs/20-GLOSSARY.md` — terms.
 - `docs/21-GUIDE-OVERLAY-BLOCKER.md` — why the guide is unavailable on KineticWE.
+- `docs/22-STEAM-MVP.md` — the current Steam-only build scope (sections 1–4).
 
 ## Reminders for future agents
 

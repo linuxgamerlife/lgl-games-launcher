@@ -10,16 +10,16 @@ The packaging follows the LGL GTK standard and the
 
 | Item | Value |
 | --- | --- |
-| Package | `lgl-games-library` |
-| Binary | `/usr/bin/lgl-games-library` |
-| Application ID | `com.linuxgamerlife.lgl-games-library` |
-| Desktop file | `com.linuxgamerlife.lgl-games-library.desktop` |
-| Metainfo | `com.linuxgamerlife.lgl-games-library.metainfo.xml` |
-| Icon | `lgl-games-library` |
-| Config | `~/.config/lgl-games-library/settings.ini` |
-| Data | `~/.local/share/lgl-games-library/` |
-| Cache | `~/.cache/lgl-games-library/` |
-| User units | `lgl-games-library-sessiond.service`, optional guide-button unit |
+| Package | `lgl-games-launcher` |
+| Binary | `/usr/bin/lgl-games-launcher` |
+| Application ID | `com.linuxgamerlife.lgl-games-launcher` |
+| Desktop file | `com.linuxgamerlife.lgl-games-launcher.desktop` |
+| Metainfo | `com.linuxgamerlife.lgl-games-launcher.metainfo.xml` |
+| Icon | `lgl-games-launcher` |
+| Config | `~/.config/lgl-games-launcher/settings.ini` |
+| Data | `~/.local/share/lgl-games-launcher/` |
+| Cache | `~/.cache/lgl-games-launcher/` |
+| User units | `lgl-games-launcher-sessiond.service`, optional guide-button unit |
 | Licence | `GPL-3.0-or-later` |
 | Upstream | independent GTK port; Omakade attribution preserved |
 
@@ -36,20 +36,20 @@ CMakeLists.txt
 Makefile
 .copr/Makefile
 packaging/
-  lgl-games-library.spec
-  com.linuxgamerlife.lgl-games-library.desktop
-  com.linuxgamerlife.lgl-games-library.metainfo.xml
-  icons/lgl-games-library.png                 # master artwork
-  icons/48x48/lgl-games-library.png
-  icons/64x64/lgl-games-library.png
-  icons/128x128/lgl-games-library.png
-  icons/256x256/lgl-games-library.png
-  lgl-games-library-sessiond.service
-  lgl-games-library-guide-button.service       # optional Home/Capture actions; no overlay
+  lgl-games-launcher.spec
+  com.linuxgamerlife.lgl-games-launcher.desktop
+  com.linuxgamerlife.lgl-games-launcher.metainfo.xml
+  icons/lgl-games-launcher.png                 # master artwork
+  icons/48x48/lgl-games-launcher.png
+  icons/64x64/lgl-games-launcher.png
+  icons/128x128/lgl-games-launcher.png
+  icons/256x256/lgl-games-launcher.png
+  lgl-games-launcher-sessiond.service
+  lgl-games-launcher-guide-button.service       # optional Home/Capture actions; no overlay
 data/
-  lgl-games-library.gresource.xml
+  lgl-games-launcher.gresource.xml
   style.css
-  icons/lgl-games-library.png                  # 256 px copy for header/About
+  icons/lgl-games-launcher.png                  # 256 px copy for header/About
   consoles/*.png
   native-ports.json
 ```
@@ -65,13 +65,13 @@ The spec builds from the repository root with `%cmake -DBUILD_TESTING=ON`, runs 
 validates installed metadata. It does **not** build Qt or KF6.
 
 ```spec
-Name:           lgl-games-library
+Name:           lgl-games-launcher
 Version:        0.1.0
 Release:        1%{?dist}
 Summary:        GTK game library for Fedora
 
 License:        GPL-3.0-or-later
-URL:            https://github.com/linuxgamerlife/lgl-games-library
+URL:            https://github.com/linuxgamerlife/lgl-games-launcher
 Source0:        %{url}/archive/refs/tags/v%{version}/%{name}-%{version}.tar.gz
 
 BuildRequires:  cmake >= 3.20
@@ -105,7 +105,7 @@ Requires:       xdg-desktop-portal
 Recommends:     kineticwe
 
 %description
-LGL Games Library brings installed Steam, Heroic, Lutris, GOG, emulator and
+LGL Games Launcher brings installed Steam, Heroic, Lutris, GOG, emulator and
 native-port games into one local GTK library for Fedora. It discovers games
 read-only, delegates launching to the owning launcher or emulator, and can
 record play sessions and protect emulator saves. KineticWE and Noctalia provide
@@ -150,19 +150,19 @@ Do not make the RPM build depend on a live KineticWE session.
 %files
 %license COPYRIGHT LICENSE
 %doc README.md CHANGELOG.md HELP.md docs/
-%{_bindir}/lgl-games-library
-%{_bindir}/lgl-games-library-sessiond
-%{_bindir}/lgl-games-library-guide-button
-%{_datadir}/applications/com.linuxgamerlife.lgl-games-library.desktop
-%{_datadir}/metainfo/com.linuxgamerlife.lgl-games-library.metainfo.xml
-%{_datadir}/icons/hicolor/48x48/apps/lgl-games-library.png
-%{_datadir}/icons/hicolor/64x64/apps/lgl-games-library.png
-%{_datadir}/icons/hicolor/128x128/apps/lgl-games-library.png
-%{_datadir}/icons/hicolor/256x256/apps/lgl-games-library.png
-%{_userunitdir}/lgl-games-library-sessiond.service
-%{_userunitdir}/lgl-games-library-guide-button.service
-%{_datadir}/lgl-games-library/
-%{_datadir}/doc/lgl-games-library/
+%{_bindir}/lgl-games-launcher
+%{_bindir}/lgl-games-launcher-sessiond
+%{_bindir}/lgl-games-launcher-guide-button
+%{_datadir}/applications/com.linuxgamerlife.lgl-games-launcher.desktop
+%{_datadir}/metainfo/com.linuxgamerlife.lgl-games-launcher.metainfo.xml
+%{_datadir}/icons/hicolor/48x48/apps/lgl-games-launcher.png
+%{_datadir}/icons/hicolor/64x64/apps/lgl-games-launcher.png
+%{_datadir}/icons/hicolor/128x128/apps/lgl-games-launcher.png
+%{_datadir}/icons/hicolor/256x256/apps/lgl-games-launcher.png
+%{_userunitdir}/lgl-games-launcher-sessiond.service
+%{_userunitdir}/lgl-games-launcher-guide-button.service
+%{_datadir}/lgl-games-launcher/
+%{_datadir}/doc/lgl-games-launcher/
 %changelog
 ```
 
@@ -177,21 +177,21 @@ generated file.
 ```ini
 [Desktop Entry]
 Type=Application
-Name=LGL Games Library
+Name=LGL Games Launcher
 GenericName=Game Library
 Comment=Your games from every launcher in one library
-Exec=lgl-games-library
-Icon=lgl-games-library
+Exec=lgl-games-launcher
+Icon=lgl-games-launcher
 Terminal=false
 Categories=Game;Player;
 Keywords=Games;Launcher;Library;Steam;Heroic;Lutris;GOG;RetroArch;Emulator;
 StartupNotify=true
-StartupWMClass=com.linuxgamerlife.lgl-games-library
+StartupWMClass=com.linuxgamerlife.lgl-games-launcher
 Actions=GameMode;
 
 [Desktop Action GameMode]
 Name=Game Mode
-Exec=lgl-games-library --game-mode
+Exec=lgl-games-launcher --game-mode
 ```
 
 - `StartupWMClass` must match the Wayland app id / WM class so the launcher groups the window.
@@ -207,22 +207,22 @@ Required fields:
 
 ```xml
 <component type="desktop-application">
-  <id>com.linuxgamerlife.lgl-games-library</id>
-  <name>LGL Games Library</name>
+  <id>com.linuxgamerlife.lgl-games-launcher</id>
+  <name>LGL Games Launcher</name>
   <summary>Your games from every launcher in one library</summary>
   <metadata_license>CC0-1.0</metadata_license>
   <project_license>GPL-3.0-or-later</project_license>
   <developer id="com.linuxgamerlife">
     <name>LinuxGamerLife</name>
   </developer>
-  <launchable type="desktop-id">com.linuxgamerlife.lgl-games-library.desktop</launchable>
+  <launchable type="desktop-id">com.linuxgamerlife.lgl-games-launcher.desktop</launchable>
   <content_rating type="oars-1.1" />
   <releases>...</releases>
 </component>
 ```
 
 - Add a `<release>` entry for every version, newest first.
-- Add `<provides><id>com.linuxgamerlife.lgl-games-library</id></provides>` only if the id
+- Add `<provides><id>com.linuxgamerlife.lgl-games-launcher</id></provides>` only if the id
   changes later; do not claim Omakade’s id.
 - Screenshots must be local or HTTPS and must show the actual app.
 - Validate with `appstreamcli validate --no-net`.
@@ -231,25 +231,25 @@ Required fields:
 
 ## 6. systemd user units
 
-`lgl-games-library-sessiond.service`:
+`lgl-games-launcher-sessiond.service`:
 
 ```ini
 [Unit]
-Description=LGL Games Library session recorder
-Documentation=man:lgl-games-library(1)
+Description=LGL Games Launcher session recorder
+Documentation=man:lgl-games-launcher(1)
 PartOf=graphical-session.target
 After=graphical-session.target
 
 [Service]
 Type=simple
-ExecStart=/usr/bin/lgl-games-library-sessiond
+ExecStart=/usr/bin/lgl-games-launcher-sessiond
 Restart=on-failure
 RestartSec=5
 NoNewPrivileges=true
 PrivateTmp=true
 ProtectSystem=strict
 ProtectHome=read-only
-ReadWritePaths=%h/.local/share/lgl-games-library %h/.cache/lgl-games-library
+ReadWritePaths=%h/.local/share/lgl-games-launcher %h/.cache/lgl-games-launcher
 Environment=GIO_USE_VFS=local
 
 [Install]
@@ -283,8 +283,8 @@ Root `Makefile`:
 - `.copr/Makefile` includes the root `Makefile` for COPR’s `make_srpm`.
 
 ```bash
-make archive     # dist/lgl-games-library-<version>.tar.gz
-make srpm        # result/lgl-games-library-<version>-1.fc44.src.rpm
+make archive     # dist/lgl-games-launcher-<version>.tar.gz
+make srpm        # result/lgl-games-launcher-<version>-1.fc44.src.rpm
 ```
 
 The archive must reproduce the release commit; verify with `tar -tzf` and a clean build.
@@ -293,7 +293,7 @@ The archive must reproduce the release commit; verify with `tar -tzf` and a clea
 
 ## 8. COPR
 
-- Project: `linuxgamerlife/lgl-games-library` or the maintainer’s chosen COPR.
+- Project: `linuxgamerlife/lgl-games-launcher` or the maintainer’s chosen COPR.
 - Build for Fedora 44 x86_64 and aarch64.
 - `make_srpm` method uses `.copr/Makefile`.
 - COPR builds from the source archive, not a local binary.
@@ -310,8 +310,8 @@ Every release:
 1. Build in CI/COPR from a tagged commit in a controlled Fedora 44 environment.
 2. Generate a source archive and SRPM from the same commit.
 3. Publish:
-   - `lgl-games-library-<version>.tar.gz`
-   - `lgl-games-library-<version>-1.fc44.src.rpm`
+   - `lgl-games-launcher-<version>.tar.gz`
+   - `lgl-games-launcher-<version>-1.fc44.src.rpm`
    - binary RPMs
    - `SHA256SUMS`
    - a detached signature (`minisign` or GPG) for `SHA256SUMS`
@@ -347,7 +347,7 @@ A Flatpak is not a substitute for the RPM and is not part of the 1.0 release gat
 
 - Semantic versioning for the app: 0.x during development, 1.0 at the stable gate.
 - The version appears in:
-  1. `packaging/lgl-games-library.spec` (`Version`, `Release`, `%changelog`);
+  1. `packaging/lgl-games-launcher.spec` (`Version`, `Release`, `%changelog`);
   2. root `CMakeLists.txt` (`project(... VERSION ...)`);
   3. metainfo `<releases>`;
   4. `CHANGELOG.md` and the README current-release line.

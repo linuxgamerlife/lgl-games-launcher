@@ -34,7 +34,7 @@ the target desktop's APIs.
 
 ```text
                     ┌──────────────────────────────────────────────┐
-                    │ lgl-games-library (GUI, unprivileged)        │
+                    │ lgl-games-launcher (GUI, unprivileged)        │
                     │                                              │
   launcher files ──►│ scanners ──► core library ──► Gio::ListModel │
   ROM folders    ──►│      │             │              │          │
@@ -47,13 +47,13 @@ the target desktop's APIs.
                     └────────────────────┼──────────────────────────┘
                                          │ WAL, separate connection
                     ┌────────────────────┴──────────────────────────┐
-                    │ lgl-games-library-sessiond                    │
+                    │ lgl-games-launcher-sessiond                    │
                     │ process polling, play sessions, Discord IPC,  │
                     │ optional highlight work                       │
                     └────────────────────┬──────────────────────────┘
                                          │ local Unix socket (0600)
                     ┌────────────────────┴──────────────────────────┐
-                    │ lgl-games-library-guide-button (optional)     │
+                    │ lgl-games-launcher-guide-button (optional)     │
                     │ evdev read-only, controller Home/Capture      │
                     └───────────────────────────────────────────────┘
 ```
@@ -62,9 +62,9 @@ the target desktop's APIs.
 
 | Binary | Runs as | Purpose | Required |
 | --- | --- | --- | --- |
-| `lgl-games-library` | user | GTK application, library UI, launches games, owns single-instance socket | yes |
-| `lgl-games-library-sessiond` | user | Play-session recorder, optional Discord presence, optional highlight work | runtime feature |
-| `lgl-games-library-guide-button` | user | Reads controller Home/Capture evdev events and forwards short commands; no overlay | optional |
+| `lgl-games-launcher` | user | GTK application, library UI, launches games, owns single-instance socket | yes |
+| `lgl-games-launcher-sessiond` | user | Play-session recorder, optional Discord presence, optional highlight work | runtime feature |
+| `lgl-games-launcher-guide-button` | user | Reads controller Home/Capture evdev events and forwards short commands; no overlay | optional |
 
 The in-game guide overlay is not built on KineticWE because the compositor does not provide
 layer-shell. The guide-button helper can still forward Game Mode/desktop actions, but it must
@@ -313,7 +313,7 @@ Rules:
 
 ### Single instance
 
-- `Gio::SocketService` on `$XDG_RUNTIME_DIR/lgl-games-library/control.sock`.
+- `Gio::SocketService` on `$XDG_RUNTIME_DIR/lgl-games-launcher/control.sock`.
 - Directory mode `0700`, socket mode `0600`.
 - Protocol: newline-delimited JSON, maximum 4 KiB per line, maximum 8 KiB total.
 - Commands: `activate`, `play <key>`, `rescan <source>`, `game-mode enter|exit|toggle`,
@@ -326,7 +326,7 @@ Rules:
 Preserve the useful upstream commands, with documented parsing and validation:
 
 ```text
-lgl-games-library [--demo] [--play SOURCE:RUNNER:ID] [--quit]
+lgl-games-launcher [--demo] [--play SOURCE:RUNNER:ID] [--quit]
                   [--game-mode] [--game-mode-exit] [--game-mode-toggle]
                   [--couch] [--clip] [--help] [--version]
 ```
@@ -356,7 +356,7 @@ lgl-games-library [--demo] [--play SOURCE:RUNNER:ID] [--quit]
 ## 11. Logging
 
 - Use `g_message`/`g_warning`/`g_critical` with a project log domain
-  (`lgl-games-library`).
+  (`lgl-games-launcher`).
 - `G_MESSAGES_DEBUG=all` enables verbose logs in development.
 - Never log secrets, API keys, credentials, full save contents, ROM hashes or file bytes.
 - Log one line per privileged-equivalent action: launch requested, program + argv with
@@ -470,7 +470,7 @@ The guide data protocol may be specified for that future, but no overlay code sh
 Following the GTK standard:
 
 - `main.cpp` owns only `Gtk::Application`, `startup`, `activate` and the window lifetime.
-- The main window is `gameslibrary::Window`, a `Gtk::ApplicationWindow`.
+- The main window is `gameslauncher::Window`, a `Gtk::ApplicationWindow`.
 - The header bar is a member, not `make_managed`, so it can move between title bar modes.
 - The body is a `Gtk::Box` inside a `Gtk::Overlay` for notices.
 - Pages are `Gtk::Stack` children; the library grid uses `Gtk::GridView` with a
@@ -491,15 +491,15 @@ The full screen specification is in [05-UI specification](05-UI-SPEC.md).
 add_library(lgl_games_core STATIC ...)   # no widgets; links glibmm/giomm/json-glib/sqlite3
 add_library(lgl_games_platform STATIC ...) # Gio, libsoup, libsecret, SDL3, SQLite wrappers
 add_library(lgl_games_ui STATIC ...)     # gtkmm, gdkmm, libadwaita C API
-add_executable(lgl-games-library ...)    # main + resources; links all three
-add_executable(lgl-games-library-sessiond ...)
-add_executable(lgl-games-library-guide-button ...) # optional, if built
+add_executable(lgl-games-launcher ...)    # main + resources; links all three
+add_executable(lgl-games-launcher-sessiond ...)
+add_executable(lgl-games-launcher-guide-button ...) # optional, if built
 ```
 
 - Warnings as errors on C++ (`-Wall -Wextra -Wpedantic -Werror`); generated resource C with
   `-w`.
-- `LGL_GAMES_LIBRARY_ENABLE_SANITIZERS` for ASan+UBSan.
-- `LGL_GAMES_LIBRARY_VERSION` compile definition.
+- `LGL_GAMES_LAUNCHER_ENABLE_SANITIZERS` for ASan+UBSan.
+- `LGL_GAMES_LAUNCHER_VERSION` compile definition.
 - One test executable per core module, plus UI/snapshot tests.
 - Install rules in the root CMake, per the migration standard.
 

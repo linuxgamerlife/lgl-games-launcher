@@ -1,18 +1,21 @@
-# LGL Games Library
+# LGL Games Launcher
 
-**Design documentation for a native GTK 4 game library for Fedora, based on Omakade.**
+**A native GTK 4 Steam library and launcher for Fedora, based on Omakade.**
 
-> **Status: design only.** No application code exists in this repository yet. This
-> repository currently contains the project charter, feasibility assessment, architecture,
-> security review, implementation plan and release plan. Nothing here has been built.
+> **Status: Steam-only MVP implementation.** The first build covers Steam discovery, library
+> browsing/organisation, details and launching. Tracking, Game Mode, guide, highlights, saves,
+> backups and streaming are documented but not built. See
+> [`docs/22-STEAM-MVP.md`](docs/22-STEAM-MVP.md).
 
 ## What it is
 
-LGL Games Library brings games installed by Steam, Heroic, Lutris, GOG, emulators and
-native ports into one local library. It discovers games without modifying the owning
-launcher, shows local artwork and metadata, launches games through the launcher or emulator
-that owns them, and can record play sessions, protect emulator saves and back up the
-personal parts of the library.
+LGL Games Launcher is a native GTK 4 game library for Fedora. The **current build is Steam-only**:
+it discovers installed Steam games from local manifests, shows them in a GTK library, provides
+search, sorting, favourites, hidden games, tags and a details page, and launches games through
+Steam or Flatpak Steam.
+
+The wider Omakade feature set (other launchers, emulators, tracking, Game Mode, guide,
+highlights, save protection, backups and streaming) remains documented but is **not built**.
 
 It is a Fedora-first application:
 
@@ -63,11 +66,8 @@ multi-month project. See [`docs/01-FEASIBILITY.md`](docs/01-FEASIBILITY.md).
 
 | Tier | Meaning | Examples |
 | --- | --- | --- |
-| P0 | First usable release (0.1) | Discover, browse, search, launch and track Steam/Heroic/Lutris/GOG/RetroArch/ROM-folder/manual games; GTK shell; settings; single instance |
-| P1 | Beta (0.5) | Organisation, artwork, metadata, links, backup/restore, save protection, remaining emulators, statistics, basic controller Game Mode |
-| P2 | 1.0 and later | Advanced Game Mode, achievements, Year in Review, Sunshine, RomM, Xodus/Battle.net, Discord presence |
-| P3 | Optional/conditional | Highlight clips with an external recorder; no in-game overlay until KineticWE supports one |
-| Dropped | Not portable or not wanted | Omarchy theme files, Omarchy shell plugin, in-game guide overlay (until KineticWE support), Hyprland Lua key-binding injection, Omarchy do-not-disturb switching |
+| P0 (current build) | Steam-only MVP | Steam discovery, grid, search/filter/sort, favourites/hidden/tags, details, launch |
+| Deferred | Drafted, not built | Other launchers/emulators, tracking, Game Mode, guide, highlights, saves, backups, streaming |
 
 The detailed matrix is in [`docs/06-FEATURE-PARITY.md`](docs/06-FEATURE-PARITY.md).
 
@@ -99,25 +99,44 @@ Most useful first:
 6. [`docs/07-IMPLEMENTATION-PLAN.md`](docs/07-IMPLEMENTATION-PLAN.md) — phases and order of work.
 7. [`docs/08-ROADMAP.md`](docs/08-ROADMAP.md) — milestones and release gates.
 
+## Build and run
+
+Build inside the Fedora development distrobox (`fedora-dev1`), not on the host:
+
+```bash
+distrobox enter fedora-dev1 -- bash -lc '
+  cd /run/host/development/projects/lgl-games-launcher
+  cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTING=OFF
+  cmake --build build -j"$(nproc)"
+'
+```
+
+Run it in the real session:
+
+```bash
+./build/lgl-games-launcher
+```
+
+It reads Steam manifests only. It does not write to Steam’s directories. User flags are stored
+in `$XDG_DATA_HOME/lgl-games-launcher/library.sqlite3`; settings in
+`$XDG_CONFIG_HOME/lgl-games-launcher/settings.ini`.
+
 ## Current state
 
 | Item | State |
 | --- | --- |
 | Feasibility study | Complete (2026-11-08) |
-| Product scope | Draft for approval |
-| Architecture | Draft for approval |
-| Security design review | Draft for approval |
-| Implementation | Not started |
+| Product scope | Steam-only MVP approved |
+| Architecture | Broad design recorded; MVP implemented |
+| Security design review | Broad design recorded; MVP code follows it |
+| Implementation | Steam discovery, library, details and launch built |
+| Automated tests | Deferred; maintainer tests manually |
 | Target Fedora release | Fedora 44 and later |
 | Target desktop | KineticWE + Noctalia (Wayland) |
 | Upstream reference | Omakade 1.18.0 |
 
 ## Next action
 
-Review the open decisions in [`docs/17-RISKS-DECISIONS.md`](docs/17-RISKS-DECISIONS.md),
-approve the P0 scope, then start Phase 1 in
-[`docs/07-IMPLEMENTATION-PLAN.md`](docs/07-IMPLEMENTATION-PLAN.md).
-
-Nothing in this repository may be described as built, tested or released until the
-corresponding gate in [`docs/19-ACCEPTANCE-CRITERIA.md`](docs/19-ACCEPTANCE-CRITERIA.md) has
-been met.
+Run the MVP against a real Steam library, then decide the next slice: richer metadata,
+collections/saved filters, or launch setup. Tracking, Game Mode, guide, highlights, saves,
+backups and streaming are not part of this build.
