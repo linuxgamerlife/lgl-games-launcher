@@ -18,6 +18,7 @@ struct LibraryFilter {
   std::string sort = "title";
   bool favorites_only = false;
   bool show_hidden = false;
+  bool installed_only = false;
 };
 
 // Merges Steam records with local flags and applies the current view.

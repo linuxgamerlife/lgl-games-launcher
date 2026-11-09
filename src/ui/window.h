@@ -57,6 +57,7 @@ private:
   void navigate_history();
   void play(const std::string& app_id);
   void set_status(const std::string& app_id, const std::string& status);
+  void open_in_steam(const std::string& app_id);
   void load_igdb(const std::string& app_id);
   void load_achievements(const std::string& app_id);
   void show_connections();
@@ -75,6 +76,7 @@ private:
   Gtk::Box m_logo;
   Gtk::Image m_icon;
   Gtk::Label m_wordmark;
+  Gtk::Button m_home_button;
   Gtk::Button m_refresh_button;
   Gtk::MenuButton m_menu_button;
   Gtk::Box m_content;

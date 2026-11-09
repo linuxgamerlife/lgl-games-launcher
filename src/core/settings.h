@@ -24,6 +24,9 @@ public:
   [[nodiscard]] bool show_hidden() const;
   void set_show_hidden(bool value);
 
+  [[nodiscard]] bool installed_only() const;
+  void set_installed_only(bool value);
+
   [[nodiscard]] int cover_size() const;
   void set_cover_size(int value);
 

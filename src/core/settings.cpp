@@ -164,6 +164,20 @@ void Settings::set_igdb_client_id(const std::string& value) {
   save();
 }
 
+bool Settings::installed_only() const {
+  try {
+    return m_file->get_boolean("library", "installedOnly");
+  } catch (const Glib::Error&) {
+    return false;
+  }
+}
+
+void Settings::set_installed_only(bool value) {
+  ensure_loaded();
+  m_file->set_boolean("library", "installedOnly", value);
+  save();
+}
+
 bool Settings::save() {
   const std::string directory = config_dir();
   if (!ensure_private_dir(directory)) {

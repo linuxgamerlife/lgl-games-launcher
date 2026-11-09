@@ -40,6 +40,8 @@ documented.
 - Sort: title, recently played, playtime.
 - Favourites.
 - Hidden games with “show hidden”.
+- Installed-only filter.
+- Home action that clears search, favourites, installed-only and show-hidden filters.
 - Tags (comma-separated, local).
 - Persist flags in SQLite at `$XDG_DATA_HOME/lgl-games-launcher/library.sqlite3`.
 - Custom artwork and collections are **not** in this MVP.
@@ -62,6 +64,7 @@ documented.
 - Flatpak Steam: `flatpak run com.valvesoftware.Steam -applaunch <appid>`.
 - No shell; argv only.
 - Launch failure notice. Uninstalled games open Steam's install prompt.
+- Mouse Back/Forward buttons and Alt+Left/Alt+Right navigate history.
 - Missing Steam or missing install path is an actionable error.
 - Single instance: a second launch presents the existing window.
 - `--play APPID` optional command line.

@@ -371,6 +371,64 @@ std::set<std::string> owned_app_ids(const std::string& root, const std::string& 
 // 4 (name) and 5 (type); the record's app id precedes the name field. This
 // reads those fields only, bounds every string, and ignores anything it
 // cannot associate with an owned app id.
+void collect_local_app_ids(const vdf::Node& node, std::set<std::string>* ids) {
+  const vdf::Node* apps = node.child("apps");
+  if (apps != nullptr && apps->is_object) {
+    for (const auto& [key, child] : apps->children) {
+      if (!child.is_object || key.size() > 32 ||
+          !std::all_of(key.begin(), key.end(), [](unsigned char ch) {
+            return std::isdigit(ch) != 0;
+          })) {
+        continue;
+      }
+      ids->insert(key);
+    }
+  }
+  for (const auto& [key, child] : node.children) {
+    if (child.is_object) {
+      collect_local_app_ids(child, ids);
+    }
+  }
+}
+
+std::set<std::string> local_app_ids(const std::string& root, const std::string& steam_id) {
+  std::set<std::string> result;
+  std::error_code ec;
+  std::string user = steam_id;
+  const fs::path userdata = fs::path(root) / "userdata";
+  if (!user.empty() && !fs::is_directory(userdata / user, ec)) {
+    user.clear();
+  }
+  if (user.empty() && fs::is_directory(userdata, ec)) {
+    for (fs::directory_iterator it(userdata, fs::directory_options::skip_permission_denied, ec), end;
+         it != end && !ec; it.increment(ec)) {
+      const std::string name = it->path().filename().string();
+      if (it->is_directory(ec) && !name.empty() &&
+          std::all_of(name.begin(), name.end(), [](unsigned char ch) {
+            return std::isdigit(ch) != 0;
+          })) {
+        user = name;
+        break;
+      }
+    }
+  }
+  if (user.empty()) {
+    return result;
+  }
+  std::string error;
+  const auto contents = read_file(userdata / user / "config" / "localconfig.vdf", &error,
+                                  64 * 1024 * 1024);
+  if (!contents) {
+    return result;
+  }
+  const auto parsed = vdf::parse(*contents, &error);
+  if (!parsed) {
+    return result;
+  }
+  collect_local_app_ids(*parsed, &result);
+  return result;
+}
+
 std::map<std::string, std::string> appinfo_names(const std::string& root,
                                                  const std::set<std::string>& wanted) {
   std::map<std::string, std::string> result;
@@ -563,7 +621,9 @@ SteamScanResult SteamScanner::scan() {
       }
     }
 
-    const std::set<std::string> owned = owned_app_ids(root, result.steam_id);
+    std::set<std::string> owned = owned_app_ids(root, result.steam_id);
+    const std::set<std::string> local = local_app_ids(root, result.steam_id);
+    owned.insert(local.begin(), local.end());
     if (!owned.empty()) {
       const std::map<std::string, std::string> names = appinfo_names(root, owned);
       for (const std::string& app_id : owned) {

@@ -111,12 +111,17 @@ Window::Window(const Glib::RefPtr<Gtk::Application>& application)
   m_library.signal_show_hidden_changed().connect([this](bool show) {
     m_settings.set_show_hidden(show);
   });
+  m_library.signal_installed_only_changed().connect([this](bool installed) {
+    m_settings.set_installed_only(installed);
+  });
   m_details.signal_back().connect([this] { go_back(); });
   m_details.signal_play().connect([this](const std::string& app_id) { play(app_id); });
   m_details.signal_favorite().connect(
       [this](const std::string& app_id, bool value) { toggle_favorite(app_id, value); });
   m_details.signal_hide().connect(
       [this](const std::string& app_id, bool value) { toggle_hidden(app_id, value); });
+  m_details.signal_manage().connect(
+      [this](const std::string& app_id) { open_in_steam(app_id); });
   m_details.signal_tags().connect(
       [this](const std::string& app_id, const std::string& tags) { set_tags(app_id, tags); });
   m_details.signal_status().connect(
@@ -137,6 +142,7 @@ Window::Window(const Glib::RefPtr<Gtk::Application>& application)
   apply_title_bar(m_settings.system_title_bar(), false);
   m_library.set_sort_mode(m_settings.sort_mode());
   m_library.set_show_hidden(m_settings.show_hidden());
+  m_library.set_installed_only(m_settings.installed_only());
 
   auto* manager = adw_style_manager_get_default();
   if (manager != nullptr) {
@@ -195,6 +201,11 @@ void Window::build_header() {
   auto* empty_title = Gtk::make_managed<Gtk::Box>();
   m_header.set_title_widget(*empty_title);
 
+  m_home_button.set_icon_name("go-home-symbolic");
+  m_home_button.set_tooltip_text("Show all games (clear filters)");
+  m_home_button.set_action_name("win.home");
+  m_header.pack_end(m_home_button);
+
   m_refresh_button.set_icon_name("view-refresh-symbolic");
   m_refresh_button.set_tooltip_text("Rescan Steam library (Ctrl+R)");
   m_refresh_button.set_action_name("win.refresh");
@@ -203,6 +214,7 @@ void Window::build_header() {
   auto menu = Gio::Menu::create();
 
   auto library_section = Gio::Menu::create();
+  library_section->append("Show All Games", "win.home");
   library_section->append("Refresh Steam library", "win.refresh");
   library_section->append("Search", "win.search");
   menu->append_section(library_section);
@@ -224,6 +236,10 @@ void Window::build_header() {
   m_header.pack_end(m_menu_button);
 
   add_action("refresh", sigc::mem_fun(*this, &Window::refresh));
+  add_action("home", [this] {
+    m_stack.set_visible_child(m_library);
+    m_library.show_all();
+  });
   add_action("search", [this] { m_library.focus_search(); });
   add_action("about", [this] { show_about(); });
   add_action("connections", [this] { show_connections(); });
@@ -243,6 +259,7 @@ void Window::build_header() {
     application->set_accel_for_action("win.refresh", "<Control>r");
     application->set_accel_for_action("win.search", "<Control>f");
     application->set_accel_for_action("win.system-title-bar", "<Control><Shift>m");
+    application->set_accel_for_action("win.home", "<Control>h");
     application->set_accel_for_action("win.back", "<Alt>Left");
     application->set_accel_for_action("win.forward", "<Alt>Right");
   }
@@ -430,6 +447,9 @@ void Window::toggle_hidden(const std::string& app_id, bool hidden) {
   flags.hidden = hidden;
   update_game_flags(app_id, flags);
   show_notice(hidden ? "Game hidden." : "Game unhidden.");
+  if (hidden && !m_settings.show_hidden()) {
+    go_back();
+  }
 }
 
 void Window::set_tags(const std::string& app_id, const std::string& tags) {
@@ -457,7 +477,7 @@ void Window::update_game_flags(const std::string& app_id, const GameFlags& flags
     return;
   }
   game->flags = flags;
-  m_library.set_games(m_games);
+  m_library.update_game_flags(app_id, flags);
   if (m_details.current_app_id() == app_id) {
     m_details.update_flags(flags);
   }
@@ -650,6 +670,28 @@ void Window::show_connections() {
             : "Stored secret — leave blank to keep");
   }
   m_connections->present();
+}
+
+void Window::open_in_steam(const std::string& app_id) {
+  const Game* game = find_game(app_id);
+  if (game == nullptr || app_id.empty()) {
+    return;
+  }
+  const bool flatpak =
+      game->steam.library_path.find("/com.valvesoftware.Steam/") != std::string::npos;
+  LaunchCommand command;
+  const std::string uri = "steam://nav/games/details/" + app_id;
+  if (flatpak) {
+    command.program = "flatpak";
+    command.arguments = {"run", "com.valvesoftware.Steam", uri};
+  } else {
+    command.program = "steam";
+    command.arguments = {uri};
+  }
+  std::string error;
+  if (!launch(command, &error)) {
+    show_notice("Could not open Steam: " + error, true);
+  }
 }
 
 void Window::show_about() {

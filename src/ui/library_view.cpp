@@ -120,6 +120,15 @@ LibraryView::LibraryView()
   });
   m_filter_bar.append(m_show_hidden_button);
 
+  m_installed_only_button.set_label("Installed only");
+  m_installed_only_button.add_css_class("small");
+  m_installed_only_button.signal_toggled().connect([this] {
+    m_installed_only = m_installed_only_button.get_active();
+    m_installed_only_changed.emit(m_installed_only);
+    apply();
+  });
+  m_filter_bar.append(m_installed_only_button);
+
   m_sort_model = Gtk::StringList::create({"Title", "Recently played", "Playtime"});
   m_sort_dropdown.set_model(m_sort_model);
   m_sort_dropdown.set_selected(0);
@@ -209,6 +218,45 @@ void LibraryView::set_show_hidden(bool value) {
   apply();
 }
 
+void LibraryView::update_game_flags(const std::string& app_id, const GameFlags& flags) {
+  GameFlags previous;
+  for (Game& game : m_games) {
+    if (game.steam.app_id == app_id) {
+      previous = game.flags;
+      game.flags = flags;
+      break;
+    }
+  }
+  const auto found = m_by_id.find(app_id);
+  if (found != m_by_id.end()) {
+    found->second.flags = flags;
+  }
+  const bool was_visible = (!previous.hidden || m_show_hidden) &&
+                           (!m_favorites_only || previous.favorite);
+  const bool now_visible = (!flags.hidden || m_show_hidden) &&
+                           (!m_favorites_only || flags.favorite);
+  if (was_visible != now_visible || m_favorites_only) {
+    apply();
+  }
+}
+
+void LibraryView::set_installed_only(bool value) {
+  m_installed_only = value;
+  m_installed_only_button.set_active(value);
+  apply();
+}
+
+void LibraryView::show_all() {
+  m_search.set_text({});
+  m_favorites.set_active(false);
+  m_show_hidden_button.set_active(false);
+  m_installed_only_button.set_active(false);
+  m_favorites_only = false;
+  m_show_hidden = false;
+  m_installed_only = false;
+  apply();
+}
+
 void LibraryView::set_cover_size(int pixels) {
   m_cover_size = std::clamp(pixels, 96, 260);
   rebuild_model();
@@ -224,6 +272,7 @@ void LibraryView::apply() {
   filter.sort = m_sort;
   filter.favorites_only = m_favorites_only;
   filter.show_hidden = m_show_hidden;
+  filter.installed_only = m_installed_only;
   const auto visible = filter_games(m_games, filter);
 
   std::vector<Glib::ustring> ids;

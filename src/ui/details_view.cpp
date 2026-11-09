@@ -125,6 +125,7 @@ void DetailsView::build_hero() {
   m_title.add_css_class("detail-title");
   m_title.set_xalign(0.0F);
   m_title.set_wrap(true);
+  m_title.set_selectable(true);
   info->append(m_title);
 
   auto* source_row = Gtk::make_managed<Gtk::Box>(Gtk::Orientation::HORIZONTAL, 8);
@@ -160,17 +161,18 @@ void DetailsView::build_hero() {
 
   m_manage_button.set_label("MANAGE IN STEAM");
   m_manage_button.add_css_class("gl-small");
-  m_manage_button.signal_clicked().connect([this] {
-    try {
-      Gio::AppInfo::launch_default_for_uri("steam://nav/games/details/" + m_app_id);
-    } catch (const Glib::Error&) {
-      try {
-        Gio::AppInfo::launch_default_for_uri("steam://store/" + m_app_id);
-      } catch (const Glib::Error&) {
-      }
+  m_manage_button.signal_clicked().connect([this] { m_manage.emit(m_app_id); });
+  actions->append(m_manage_button);
+
+  m_copy_title.set_label("COPY TITLE");
+  m_copy_title.add_css_class("gl-small");
+  m_copy_title.signal_clicked().connect([this] {
+    auto clipboard = get_clipboard();
+    if (clipboard) {
+      clipboard->set_text(m_title.get_text());
     }
   });
-  actions->append(m_manage_button);
+  actions->append(m_copy_title);
 
   m_hide_button.add_css_class("gl-small");
   m_hide_button.signal_clicked().connect([this] { m_hide.emit(m_app_id, !m_is_hidden); });

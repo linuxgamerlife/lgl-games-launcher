@@ -21,6 +21,7 @@ versioning once implementation starts.
   - stats cards, Steam achievement progress and list, and optional IGDB insights;
   - IGDB exact-title fallback when a Steam app has no external-game mapping.
   - Steam and Flatpak Steam launch;
+  - installed-only filter, Home action, copy game title and mouse/keyboard navigation history;
   - single-instance GTK application, standard header bar, menu, About and settings;
   - the supplied LGL Games Launcher icon at 48/64/128/256 and in the header/About;
   - cached Steam achievement icons from the public Steam CDN;

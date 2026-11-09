@@ -42,6 +42,7 @@ public:
   sigc::signal<void(const std::string&)>& signal_play() { return m_play; }
   sigc::signal<void(const std::string&, bool)>& signal_favorite() { return m_favorite; }
   sigc::signal<void(const std::string&, bool)>& signal_hide() { return m_hide; }
+  sigc::signal<void(const std::string&)>& signal_manage() { return m_manage; }
   sigc::signal<void(const std::string&, const std::string&)>& signal_tags() {
     return m_tags_signal;
   }
@@ -88,6 +89,7 @@ private:
   Gtk::Button m_favorite_button;
   Gtk::Button m_hide_button;
   Gtk::Button m_manage_button;
+  Gtk::Button m_copy_title;
 
   Gtk::Box m_organize_card;
   std::map<std::string, Gtk::ToggleButton*> m_status_buttons;
@@ -122,6 +124,7 @@ private:
   sigc::signal<void(const std::string&)> m_play;
   sigc::signal<void(const std::string&, bool)> m_favorite;
   sigc::signal<void(const std::string&, bool)> m_hide;
+  sigc::signal<void(const std::string&)> m_manage;
   sigc::signal<void(const std::string&, const std::string&)> m_tags_signal;
   sigc::signal<void(const std::string&, const std::string&)> m_status_signal;
   sigc::signal<void(const std::string&)> m_refresh_igdb;

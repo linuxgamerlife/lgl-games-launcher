@@ -47,6 +47,9 @@ std::vector<Game> filter_games(const std::vector<Game>& games, const LibraryFilt
     if (filter.favorites_only && !game.flags.favorite) {
       continue;
     }
+    if (filter.installed_only && !game.steam.installed) {
+      continue;
+    }
     if (!query.empty()) {
       const std::string title = normalise_title(game.steam.name);
       const std::string tags = normalise_title(game.flags.tags);

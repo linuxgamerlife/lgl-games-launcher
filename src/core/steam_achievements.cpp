@@ -77,11 +77,15 @@ SteamAchievementsResult fetch_steam_achievements(const std::string& steam_id,
   } else {
     gsize size = 0;
     const char* data = static_cast<const char*>(g_bytes_get_data(bytes, &size));
-    xmlDoc* document = xmlReadMemory(data, static_cast<int>(size), "steam.xml", nullptr,
-                                     XML_PARSE_NONET | XML_PARSE_NOERROR | XML_PARSE_NOWARNING);
-    if (document == nullptr) {
-      result.error = "Steam returned malformed achievement data.";
+    const std::string_view body(data, size);
+    if (body.rfind("<!DOCTYPE", 0) == 0 || body.rfind("<html", 0) == 0) {
+      result.error = "Steam did not return achievement XML for this game.";
     } else {
+      xmlDoc* document = xmlReadMemory(data, static_cast<int>(size), "steam.xml", nullptr,
+                                       XML_PARSE_NONET | XML_PARSE_NOERROR | XML_PARSE_NOWARNING);
+      if (document == nullptr) {
+        result.error = "Steam returned malformed achievement data.";
+      } else {
       xmlNode* root = xmlDocGetRootElement(document);
       xmlNode* achievements = nullptr;
       if (root != nullptr) {
@@ -137,8 +141,9 @@ SteamAchievementsResult fetch_steam_achievements(const std::string& steam_id,
                            }
                            return first.name < second.name;
                          });
+        }
+        xmlFreeDoc(document);
       }
-      xmlFreeDoc(document);
     }
   }
 
