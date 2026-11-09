@@ -31,8 +31,8 @@ Window::Window(const Glib::RefPtr<Gtk::Application>& application)
   set_size_request(640, 420);
 
   m_theme.install();
-  m_theme.signal_changed().connect([this] { update_dark_class(); });
-  m_artwork_dispatcher.connect([this] {
+  m_theme_connection = m_theme.signal_changed().connect([this] { update_dark_class(); });
+  m_artwork_connection = m_artwork_dispatcher.connect([this] {
     apply_cached_covers();
     m_library.set_games(m_games);
     if (!m_details.current_app_id().empty()) {
@@ -41,7 +41,7 @@ Window::Window(const Glib::RefPtr<Gtk::Application>& application)
       }
     }
   });
-  m_igdb_dispatcher.connect([this] {
+  m_igdb_connection = m_igdb_dispatcher.connect([this] {
     std::string app_id;
     IgdbInfo info;
     {
@@ -53,7 +53,7 @@ Window::Window(const Glib::RefPtr<Gtk::Application>& application)
       m_details.set_igdb(info);
     }
   });
-  m_achievements_dispatcher.connect([this] {
+  m_achievements_connection = m_achievements_dispatcher.connect([this] {
     std::string app_id;
     SteamAchievementsResult result;
     {
@@ -118,7 +118,7 @@ Window::Window(const Glib::RefPtr<Gtk::Application>& application)
   m_details.signal_play().connect([this](const std::string& app_id) { play(app_id); });
   m_details.signal_favorite().connect(
       [this](const std::string& app_id, bool value) { toggle_favorite(app_id, value); });
-  m_details.signal_hide().connect(
+  m_details.signal_hide_game().connect(
       [this](const std::string& app_id, bool value) { toggle_hidden(app_id, value); });
   m_details.signal_manage().connect(
       [this](const std::string& app_id) { open_in_steam(app_id); });
@@ -159,10 +159,15 @@ Window::Window(const Glib::RefPtr<Gtk::Application>& application)
       },
       false);
 
-  Glib::signal_idle().connect_once([this] { scan_and_load(); });
+  m_scan_idle = Glib::signal_idle().connect([this] {
+    scan_and_load();
+    return false;
+  });
 }
 
 Window::~Window() {
+  m_scan_idle.disconnect();
+  m_notice_timeout.disconnect();
   if (m_igdb_thread.joinable()) {
     m_igdb_thread.request_stop();
     m_igdb_thread.join();
@@ -177,6 +182,10 @@ Window::~Window() {
       thread.join();
     }
   }
+  m_theme_connection.disconnect();
+  m_artwork_connection.disconnect();
+  m_igdb_connection.disconnect();
+  m_achievements_connection.disconnect();
   if (m_dark_handler != 0) {
     auto* manager = adw_style_manager_get_default();
     if (manager != nullptr) {
@@ -368,6 +377,10 @@ void Window::open_game(const std::string& app_id) {
     m_history.resize(m_history_pos + 1);
   }
   if (m_history.empty() || m_history.back() != app_id) {
+    if (m_history.size() > 500) {
+      m_history.erase(m_history.begin() + 1);
+      m_history_pos = m_history.size() - 1;
+    }
     m_history.push_back(app_id);
     m_history_pos = m_history.size() - 1;
   }

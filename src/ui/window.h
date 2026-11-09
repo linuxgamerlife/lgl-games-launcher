@@ -95,17 +95,22 @@ private:
   SteamScanResult m_scan;
   std::vector<Game> m_games;
   ThemeWatcher m_theme;
+  sigc::connection m_theme_connection;
 
   bool m_system_title_bar = false;
   Glib::RefPtr<Gio::SimpleAction> m_title_action;
   gulong m_dark_handler = 0;
   sigc::connection m_notice_timeout;
+  sigc::connection m_scan_idle;
   Glib::Dispatcher m_artwork_dispatcher;
+  sigc::connection m_artwork_connection;
   std::vector<std::jthread> m_artwork_threads;
   std::jthread m_igdb_thread;
   std::jthread m_achievements_thread;
   Glib::Dispatcher m_igdb_dispatcher;
+  sigc::connection m_igdb_connection;
   Glib::Dispatcher m_achievements_dispatcher;
+  sigc::connection m_achievements_connection;
   std::mutex m_metadata_mutex;
   std::string m_pending_igdb_app;
   IgdbInfo m_pending_igdb;

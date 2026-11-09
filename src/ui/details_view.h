@@ -41,7 +41,7 @@ public:
   sigc::signal<void()>& signal_back() { return m_back_signal; }
   sigc::signal<void(const std::string&)>& signal_play() { return m_play; }
   sigc::signal<void(const std::string&, bool)>& signal_favorite() { return m_favorite; }
-  sigc::signal<void(const std::string&, bool)>& signal_hide() { return m_hide; }
+  sigc::signal<void(const std::string&, bool)>& signal_hide_game() { return m_hide; }
   sigc::signal<void(const std::string&)>& signal_manage() { return m_manage; }
   sigc::signal<void(const std::string&, const std::string&)>& signal_tags() {
     return m_tags_signal;

@@ -25,6 +25,7 @@ private:
 
   Glib::RefPtr<Gtk::CssProvider> m_user_provider;
   Glib::RefPtr<Gio::FileMonitor> m_monitor;
+  sigc::connection m_monitor_connection;
   sigc::connection m_timeout;
   sigc::signal<void()> m_changed;
 };

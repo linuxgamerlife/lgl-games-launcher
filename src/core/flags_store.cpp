@@ -106,7 +106,14 @@ GameFlags FlagsStore::get(const std::string& app_id) const {
 }
 
 bool FlagsStore::set(const std::string& app_id, const GameFlags& flags) {
-  if (m_db == nullptr || app_id.empty() || flags.tags.size() > 4096) {
+  if (m_db == nullptr || app_id.empty() || flags.tags.size() > 4096 ||
+      flags.status.size() > 32) {
+    return false;
+  }
+  const bool status_valid = flags.status.empty() || flags.status == "backlog" ||
+                            flags.status == "playing" || flags.status == "completed" ||
+                            flags.status == "abandoned";
+  if (!status_valid) {
     return false;
   }
   sqlite3_stmt* statement = nullptr;

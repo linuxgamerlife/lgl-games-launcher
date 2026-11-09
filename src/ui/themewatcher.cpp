@@ -22,7 +22,10 @@ std::string user_gtk_dir() {
 
 ThemeWatcher::ThemeWatcher() = default;
 
-ThemeWatcher::~ThemeWatcher() = default;
+ThemeWatcher::~ThemeWatcher() {
+  m_timeout.disconnect();
+  m_monitor_connection.disconnect();
+}
 
 void ThemeWatcher::install() {
   adw_init();
@@ -49,7 +52,7 @@ void ThemeWatcher::install() {
   try {
     const auto directory = Gio::File::create_for_path(user_gtk_dir());
     m_monitor = directory->monitor_directory(Gio::FileMonitorFlags::WATCH_MOVES);
-    m_monitor->signal_changed().connect(
+    m_monitor_connection = m_monitor->signal_changed().connect(
         [this](const Glib::RefPtr<Gio::File>&, const Glib::RefPtr<Gio::File>&,
                Gio::FileMonitor::Event) { schedule_reload(); });
   } catch (const Glib::Error&) {

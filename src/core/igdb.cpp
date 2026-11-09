@@ -60,6 +60,10 @@ double json_number(JsonObject* object, const char* member, double fallback = 0.0
   if (node == nullptr || !JSON_NODE_HOLDS_VALUE(node)) {
     return fallback;
   }
+  const GType type = json_node_get_value_type(node);
+  if (type == G_TYPE_INT64 || type == G_TYPE_INT) {
+    return static_cast<double>(json_node_get_int(node));
+  }
   return json_node_get_double(node);
 }
 
@@ -101,7 +105,15 @@ bool IgdbClient::ensure_token(std::string* error) {
     }
     return false;
   }
-  JsonObject* object = json_node_get_object(json_parser_get_root(parser));
+  JsonNode* root = json_parser_get_root(parser);
+  if (root == nullptr || !JSON_NODE_HOLDS_OBJECT(root)) {
+    g_object_unref(parser);
+    if (error != nullptr) {
+      *error = "IGDB authentication returned unexpected data.";
+    }
+    return false;
+  }
+  JsonObject* object = json_node_get_object(root);
   m_token = json_string(object, "access_token");
   const double expires = json_number(object, "expires_in", 0.0);
   g_object_unref(parser);
@@ -191,8 +203,11 @@ bool IgdbClient::fetch(const std::string& steam_app_id, const std::string& title
     JsonParser* parser = json_parser_new();
     if (json_parser_load_from_data(parser, response.c_str(),
                                    static_cast<gssize>(response.size()), nullptr)) {
-      JsonArray* external = json_node_get_array(json_parser_get_root(parser));
-      if (json_array_get_length(external) > 0) {
+      JsonNode* root = json_parser_get_root(parser);
+      JsonArray* external = (root != nullptr && JSON_NODE_HOLDS_ARRAY(root))
+                                ? json_node_get_array(root)
+                                : nullptr;
+      if (external != nullptr && json_array_get_length(external) > 0) {
         JsonObject* first = json_array_get_object_element(external, 0);
         game_id = static_cast<double>(json_object_get_int_member_with_default(first, "game", 0));
       }
@@ -221,7 +236,10 @@ bool IgdbClient::fetch(const std::string& steam_app_id, const std::string& title
       JsonParser* parser = json_parser_new();
       if (json_parser_load_from_data(parser, search_response.c_str(),
                                      static_cast<gssize>(search_response.size()), nullptr)) {
-        JsonArray* games = json_node_get_array(json_parser_get_root(parser));
+        JsonNode* search_root = json_parser_get_root(parser);
+        JsonArray* games = (search_root != nullptr && JSON_NODE_HOLDS_ARRAY(search_root))
+                               ? json_node_get_array(search_root)
+                               : nullptr;
         const std::string wanted = [&title] {
           std::string normalized;
           for (unsigned char ch : title) {
@@ -231,7 +249,7 @@ bool IgdbClient::fetch(const std::string& steam_app_id, const std::string& title
           }
           return normalized;
         }();
-        for (guint index = 0; index < json_array_get_length(games); ++index) {
+        for (guint index = 0; games != nullptr && index < json_array_get_length(games); ++index) {
           JsonObject* candidate = json_array_get_object_element(games, index);
           const std::string name = json_string(candidate, "name");
           std::string normalized;
@@ -274,8 +292,11 @@ bool IgdbClient::fetch(const std::string& steam_app_id, const std::string& title
     }
     return false;
   }
-  JsonArray* games = json_node_get_array(json_parser_get_root(parser));
-  if (json_array_get_length(games) == 0) {
+  JsonNode* game_root = json_parser_get_root(parser);
+  JsonArray* games = (game_root != nullptr && JSON_NODE_HOLDS_ARRAY(game_root))
+                         ? json_node_get_array(game_root)
+                         : nullptr;
+  if (games == nullptr || json_array_get_length(games) == 0) {
     g_object_unref(parser);
     if (error != nullptr) {
       *error = "IGDB returned no game details.";
@@ -299,8 +320,11 @@ bool IgdbClient::fetch(const std::string& steam_app_id, const std::string& title
     parser = json_parser_new();
     if (json_parser_load_from_data(parser, response.c_str(), static_cast<gssize>(response.size()),
                                    nullptr)) {
-      JsonArray* times = json_node_get_array(json_parser_get_root(parser));
-      if (json_array_get_length(times) > 0) {
+      JsonNode* time_root = json_parser_get_root(parser);
+      JsonArray* times = (time_root != nullptr && JSON_NODE_HOLDS_ARRAY(time_root))
+                             ? json_node_get_array(time_root)
+                             : nullptr;
+      if (times != nullptr && json_array_get_length(times) > 0) {
         JsonObject* time = json_array_get_object_element(times, 0);
         info->rushed_hours = static_cast<int>(json_number(time, "hastily", 0.0) / 3600.0);
         info->normal_hours = static_cast<int>(json_number(time, "normally", 0.0) / 3600.0);
