@@ -9,6 +9,7 @@
 #include <adwaita.h>
 #include <giomm/menu.h>
 #include <glibmm/main.h>
+#include <gtkmm/gestureclick.h>
 #include <gtkmm/grid.h>
 #include <gtkmm/separator.h>
 
@@ -89,6 +90,18 @@ Window::Window(const Glib::RefPtr<Gtk::Application>& application)
   m_overlay.add_overlay(m_notice_revealer);
   set_child(m_overlay);
 
+  auto back_click = Gtk::GestureClick::create();
+  back_click->set_button(8);
+  back_click->set_propagation_phase(Gtk::PropagationPhase::CAPTURE);
+  back_click->signal_pressed().connect([this](int, double, double) { go_back(); });
+  add_controller(back_click);
+
+  auto forward_click = Gtk::GestureClick::create();
+  forward_click->set_button(9);
+  forward_click->set_propagation_phase(Gtk::PropagationPhase::CAPTURE);
+  forward_click->signal_pressed().connect([this](int, double, double) { go_forward(); });
+  add_controller(forward_click);
+
   m_library.signal_open_game().connect([this](const std::string& app_id) {
     open_game(app_id);
   });
@@ -98,7 +111,7 @@ Window::Window(const Glib::RefPtr<Gtk::Application>& application)
   m_library.signal_show_hidden_changed().connect([this](bool show) {
     m_settings.set_show_hidden(show);
   });
-  m_details.signal_back().connect([this] { m_stack.set_visible_child(m_library); });
+  m_details.signal_back().connect([this] { go_back(); });
   m_details.signal_play().connect([this](const std::string& app_id) { play(app_id); });
   m_details.signal_favorite().connect(
       [this](const std::string& app_id, bool value) { toggle_favorite(app_id, value); });
@@ -152,9 +165,11 @@ Window::~Window() {
     m_achievements_thread.request_stop();
     m_achievements_thread.join();
   }
-  if (m_artwork_thread.joinable()) {
-    m_artwork_thread.request_stop();
-    m_artwork_thread.join();
+  for (std::jthread& thread : m_artwork_threads) {
+    if (thread.joinable()) {
+      thread.request_stop();
+      thread.join();
+    }
   }
   if (m_dark_handler != 0) {
     auto* manager = adw_style_manager_get_default();
@@ -212,6 +227,8 @@ void Window::build_header() {
   add_action("search", [this] { m_library.focus_search(); });
   add_action("about", [this] { show_about(); });
   add_action("connections", [this] { show_connections(); });
+  add_action("back", [this] { go_back(); });
+  add_action("forward", [this] { go_forward(); });
 
   m_title_action =
       Gio::SimpleAction::create_bool("system-title-bar", m_settings.system_title_bar());
@@ -226,6 +243,8 @@ void Window::build_header() {
     application->set_accel_for_action("win.refresh", "<Control>r");
     application->set_accel_for_action("win.search", "<Control>f");
     application->set_accel_for_action("win.system-title-bar", "<Control><Shift>m");
+    application->set_accel_for_action("win.back", "<Alt>Left");
+    application->set_accel_for_action("win.forward", "<Alt>Right");
   }
 }
 
@@ -300,15 +319,20 @@ void Window::fetch_missing_covers() {
       missing.push_back(game.steam.app_id);
     }
   }
-  m_artwork_thread = std::jthread([this, missing = std::move(missing)](std::stop_token stop) {
-    for (const std::string& app_id : missing) {
-      if (stop.stop_requested()) {
-        return;
-      }
-      artwork::fetch_steam_cover(app_id, nullptr, nullptr);
-    }
-    m_artwork_dispatcher.emit();
-  });
+  m_artwork_threads.clear();
+  const std::size_t workers = std::min<std::size_t>(4, missing.size());
+  for (std::size_t worker = 0; worker < workers; ++worker) {
+    m_artwork_threads.emplace_back(
+        [this, missing, worker, workers](std::stop_token stop) {
+          for (std::size_t index = worker; index < missing.size(); index += workers) {
+            if (stop.stop_requested()) {
+              return;
+            }
+            artwork::fetch_steam_cover(missing[index], nullptr, nullptr);
+          }
+          m_artwork_dispatcher.emit();
+        });
+  }
 }
 
 void Window::refresh() {
@@ -323,10 +347,51 @@ void Window::open_game(const std::string& app_id) {
   if (game == nullptr) {
     return;
   }
+  if (m_history_pos + 1 < m_history.size()) {
+    m_history.resize(m_history_pos + 1);
+  }
+  if (m_history.empty() || m_history.back() != app_id) {
+    m_history.push_back(app_id);
+    m_history_pos = m_history.size() - 1;
+  }
+  show_game(app_id);
+}
+
+void Window::show_game(const std::string& app_id) {
+  const Game* game = find_game(app_id);
+  if (game == nullptr) {
+    return;
+  }
   m_details.set_game(*game);
   m_stack.set_visible_child(m_details);
   load_igdb(app_id);
   load_achievements(app_id);
+}
+
+void Window::navigate_history() {
+  if (m_history.empty()) {
+    m_stack.set_visible_child(m_library);
+    return;
+  }
+  if (m_history_pos == 0) {
+    m_stack.set_visible_child(m_library);
+    return;
+  }
+  show_game(m_history[m_history_pos]);
+}
+
+void Window::go_back() {
+  if (m_history_pos > 0) {
+    --m_history_pos;
+  }
+  navigate_history();
+}
+
+void Window::go_forward() {
+  if (m_history_pos + 1 < m_history.size()) {
+    ++m_history_pos;
+  }
+  navigate_history();
 }
 
 void Window::play(const std::string& app_id) {
@@ -433,6 +498,8 @@ void Window::load_igdb(const std::string& app_id) {
   }
   const std::string client_id = m_settings.igdb_client_id();
   const std::string secret = SecretStore::lookup("igdb-client-secret");
+  const Game* game = find_game(app_id);
+  const std::string title = game != nullptr ? game->steam.name : std::string();
   if (client_id.empty() || secret.empty()) {
     IgdbInfo info;
     info.error = "Connect IGDB in Settings to see critic scores and length estimates.";
@@ -444,11 +511,11 @@ void Window::load_igdb(const std::string& app_id) {
   if (app_id == m_details.current_app_id()) {
     m_details.set_igdb_loading();
   }
-  m_igdb_thread = std::jthread([this, app_id, client_id, secret](std::stop_token stop) {
+  m_igdb_thread = std::jthread([this, app_id, title, client_id, secret](std::stop_token stop) {
     IgdbClient client(client_id, secret);
     IgdbInfo info;
     std::string error;
-    if (!client.fetch(app_id, &info, &error)) {
+    if (!client.fetch(app_id, title, &info, &error)) {
       info.error = error.empty() ? "IGDB data is unavailable." : error;
     }
     {

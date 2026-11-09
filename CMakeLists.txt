@@ -38,7 +38,8 @@ find_program(GLIB_COMPILE_RESOURCES glib-compile-resources REQUIRED)
 set(RESOURCE_XML ${PROJECT_SOURCE_DIR}/data/lgl-games-launcher.gresource.xml)
 set(RESOURCE_C ${CMAKE_CURRENT_BINARY_DIR}/lgl-games-launcher-resources.c)
 set(RESOURCE_DEPS ${PROJECT_SOURCE_DIR}/data/style.css
-    ${PROJECT_SOURCE_DIR}/data/icons/lgl-games-launcher.png)
+    ${PROJECT_SOURCE_DIR}/data/icons/lgl-games-launcher.png
+    ${PROJECT_SOURCE_DIR}/data/icons/no-art.png)
 add_custom_command(OUTPUT ${RESOURCE_C}
   COMMAND ${GLIB_COMPILE_RESOURCES} --generate-source --target=${RESOURCE_C}
           --sourcedir=${PROJECT_SOURCE_DIR}/data ${RESOURCE_XML}

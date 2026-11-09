@@ -43,6 +43,8 @@ public:
 
   void open_game(const std::string& app_id);
   void refresh();
+  void go_back();
+  void go_forward();
 
 private:
   void build_header();
@@ -51,6 +53,8 @@ private:
   void fetch_missing_covers();
   void apply_cached_covers();
   void show_notice(const std::string& text, bool error = false, bool sticky = false);
+  void show_game(const std::string& app_id);
+  void navigate_history();
   void play(const std::string& app_id);
   void set_status(const std::string& app_id, const std::string& status);
   void load_igdb(const std::string& app_id);
@@ -81,6 +85,8 @@ private:
   LibraryView m_library;
   DetailsView m_details;
   std::unique_ptr<Gtk::AboutDialog> m_about;
+  std::vector<std::string> m_history{"library"};
+  std::size_t m_history_pos = 0;
 
   Settings m_settings;
   FlagsStore m_flags;
@@ -93,7 +99,7 @@ private:
   gulong m_dark_handler = 0;
   sigc::connection m_notice_timeout;
   Glib::Dispatcher m_artwork_dispatcher;
-  std::jthread m_artwork_thread;
+  std::vector<std::jthread> m_artwork_threads;
   std::jthread m_igdb_thread;
   std::jthread m_achievements_thread;
   Glib::Dispatcher m_igdb_dispatcher;

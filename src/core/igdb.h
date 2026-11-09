@@ -27,7 +27,8 @@ public:
   IgdbClient& operator=(const IgdbClient&) = delete;
 
   [[nodiscard]] bool configured() const;
-  bool fetch(const std::string& steam_app_id, IgdbInfo* info, std::string* error);
+  bool fetch(const std::string& steam_app_id, const std::string& title,
+             IgdbInfo* info, std::string* error);
 
 private:
   bool ensure_token(std::string* error);

@@ -170,7 +170,8 @@ bool IgdbClient::post(const std::string& url, const std::string& body,
   return response != nullptr && !response->empty();
 }
 
-bool IgdbClient::fetch(const std::string& steam_app_id, IgdbInfo* info, std::string* error) {
+bool IgdbClient::fetch(const std::string& steam_app_id, const std::string& title,
+                       IgdbInfo* info, std::string* error) {
   if (info == nullptr || !numeric(steam_app_id)) {
     if (error != nullptr) {
       *error = "Invalid Steam app id.";
@@ -181,39 +182,82 @@ bool IgdbClient::fetch(const std::string& steam_app_id, IgdbInfo* info, std::str
     return false;
   }
   std::string response;
+  double game_id = 0.0;
+  std::string last_error;
   const std::string external_query =
       "fields game; where uid = \"" + steam_app_id + "\" & category = 1; limit 1;";
-  if (!post("https://api.igdb.com/v4/external_games", external_query, "text/plain",
-            m_client_id, m_token, &response, error)) {
-    return false;
-  }
-  JsonParser* parser = json_parser_new();
-  if (!json_parser_load_from_data(parser, response.c_str(), static_cast<gssize>(response.size()),
-                                  nullptr)) {
-    g_object_unref(parser);
-    if (error != nullptr) {
-      *error = "IGDB returned malformed external game data.";
+  if (post("https://api.igdb.com/v4/external_games", external_query, "text/plain",
+           m_client_id, m_token, &response, &last_error)) {
+    JsonParser* parser = json_parser_new();
+    if (json_parser_load_from_data(parser, response.c_str(),
+                                   static_cast<gssize>(response.size()), nullptr)) {
+      JsonArray* external = json_node_get_array(json_parser_get_root(parser));
+      if (json_array_get_length(external) > 0) {
+        JsonObject* first = json_array_get_object_element(external, 0);
+        game_id = static_cast<double>(json_object_get_int_member_with_default(first, "game", 0));
+      }
     }
-    return false;
-  }
-  JsonArray* external = json_node_get_array(json_parser_get_root(parser));
-  if (json_array_get_length(external) == 0) {
     g_object_unref(parser);
-    if (error != nullptr) {
-      *error = "IGDB has no match for this Steam app.";
-    }
-    return false;
   }
-  JsonObject* first = json_array_get_object_element(external, 0);
-  const double game_id = json_number(first, "game", 0.0);
-  g_object_unref(parser);
+
+  // Some Steam apps (especially demos and newer releases) have no IGDB
+  // external-game mapping. Fall back to IGDB search, accepting only an exact
+  // case-insensitive title match so a wrong game is not shown.
+  if (game_id <= 0.0 && !title.empty()) {
+    std::string escaped;
+    escaped.reserve(title.size());
+    for (char ch : title) {
+      if (ch == '\\' || ch == '"') {
+        escaped.push_back('\\');
+      }
+      escaped.push_back(ch);
+    }
+    const std::string search_query =
+        "search \"" + escaped + "\"; fields name,aggregated_rating,"
+        "aggregated_rating_count,total_rating,total_rating_count,url; limit 10;";
+    std::string search_response;
+    if (post("https://api.igdb.com/v4/games", search_query, "text/plain", m_client_id,
+             m_token, &search_response, &last_error)) {
+      JsonParser* parser = json_parser_new();
+      if (json_parser_load_from_data(parser, search_response.c_str(),
+                                     static_cast<gssize>(search_response.size()), nullptr)) {
+        JsonArray* games = json_node_get_array(json_parser_get_root(parser));
+        const std::string wanted = [&title] {
+          std::string normalized;
+          for (unsigned char ch : title) {
+            if (std::isalnum(ch) != 0) {
+              normalized.push_back(static_cast<char>(std::tolower(ch)));
+            }
+          }
+          return normalized;
+        }();
+        for (guint index = 0; index < json_array_get_length(games); ++index) {
+          JsonObject* candidate = json_array_get_object_element(games, index);
+          const std::string name = json_string(candidate, "name");
+          std::string normalized;
+          for (unsigned char ch : name) {
+            if (std::isalnum(ch) != 0) {
+              normalized.push_back(static_cast<char>(std::tolower(ch)));
+            }
+          }
+          if (normalized == wanted) {
+            game_id = static_cast<double>(json_object_get_int_member_with_default(candidate, "id", 0));
+            break;
+          }
+        }
+      }
+      g_object_unref(parser);
+    }
+  }
+
   if (game_id <= 0.0) {
     if (error != nullptr) {
-      *error = "IGDB returned no game for this Steam app.";
+      *error = last_error.empty() ? "IGDB has no match for this game." : last_error;
     }
     return false;
   }
 
+  JsonParser* parser = nullptr;
   const std::string game_query =
       "fields aggregated_rating,aggregated_rating_count,total_rating,total_rating_count,url; "
       "where id = " + std::to_string(static_cast<long long>(game_id)) + ";";

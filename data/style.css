@@ -288,3 +288,11 @@ progressbar > trough > progress {
   font-size: 1.25em;
   color: @gl_subtle;
 }
+
+.cover-placeholder {
+  font-family: "Adwaita Mono", "JetBrains Mono", monospace;
+  font-size: 0.72em;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  color: @gl_muted;
+}

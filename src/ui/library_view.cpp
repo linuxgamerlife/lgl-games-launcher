@@ -52,15 +52,17 @@ public:
     const int height = cover_size * 3 / 2;
     m_cover_frame.set_size_request(cover_size, height);
     m_picture.set_size_request(cover_size, height);
-    if (!game.steam.cover_path.empty() &&
-        std::filesystem::is_regular_file(game.steam.cover_path)) {
+    const bool has_cover =
+        !game.steam.cover_path.empty() &&
+        std::filesystem::is_regular_file(game.steam.cover_path);
+    if (has_cover) {
       try {
         m_picture.set_filename(game.steam.cover_path);
       } catch (const Glib::Error&) {
-        m_picture.set_resource("/com/linuxgamerlife/gameslauncher/icons/lgl-games-launcher.svg");
+        m_picture.set_resource("/com/linuxgamerlife/gameslauncher/icons/no-art.png");
       }
     } else {
-      m_picture.set_resource("/com/linuxgamerlife/gameslauncher/icons/lgl-games-launcher.svg");
+      m_picture.set_resource("/com/linuxgamerlife/gameslauncher/icons/no-art.png");
     }
     m_title.set_text(game.steam.name);
     std::string meta = "Steam";

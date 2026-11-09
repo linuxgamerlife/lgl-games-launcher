@@ -112,7 +112,8 @@ bool fetch_steam_cover(const std::string& app_id, std::string* path, std::string
   SoupSession* session = soup_session_new();
   g_object_set(G_OBJECT(session), "timeout", kTimeoutSeconds, nullptr);
   std::string last_error = "no cover was available";
-  for (const char* filename : {"library_600x900_2x.jpg", "library_600x900.jpg"}) {
+  for (const char* filename : {"library_600x900_2x.jpg", "library_600x900.jpg",
+                                "library_capsule.jpg", "header.jpg", "library_hero.jpg"}) {
     const std::string url =
         "https://shared.steamstatic.com/store_item_assets/steam/apps/" + app_id + "/" +
         filename;

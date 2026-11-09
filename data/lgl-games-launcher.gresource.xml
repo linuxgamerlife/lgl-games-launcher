@@ -3,5 +3,6 @@
   <gresource prefix="/com/linuxgamerlife/gameslauncher">
     <file>style.css</file>
     <file>icons/lgl-games-launcher.png</file>
+    <file>icons/no-art.png</file>
   </gresource>
 </gresources>
