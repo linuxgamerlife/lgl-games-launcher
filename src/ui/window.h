@@ -1,8 +1,8 @@
 #pragma once
 
+#include "core/epic.h"
 #include "core/flags_store.h"
 #include "core/igdb.h"
-#include "core/library.h"
 #include "core/library.h"
 #include "core/settings.h"
 #include "core/steam_achievements.h"
@@ -29,6 +29,7 @@
 #include <gtkmm/stack.h>
 
 #include <memory>
+#include <optional>
 #include <condition_variable>
 #include <mutex>
 #include <thread>
@@ -36,6 +37,8 @@
 #include <vector>
 
 namespace gameslauncher {
+
+class EpicLoginDialog;
 
 class Window final : public Gtk::ApplicationWindow {
 public:
@@ -63,6 +66,12 @@ private:
   void load_achievements(const std::string& app_id);
   void show_connections();
   void start_metadata_workers();
+  void start_epic_worker();
+  void request_epic_library();
+  void sign_in_epic();
+  void sign_out_epic();
+  void update_epic_status();
+  void merge_epic_games();
   void toggle_favorite(const std::string& app_id, bool favorite);
   void toggle_hidden(const std::string& app_id, bool hidden);
   void set_tags(const std::string& app_id, const std::string& tags);
@@ -95,6 +104,8 @@ private:
   Settings m_settings;
   FlagsStore m_flags;
   SteamScanResult m_scan;
+  FaugusScanResult m_faugus_scan;
+  StoreScanResult m_store_scan;
   std::vector<Game> m_games;
   ThemeWatcher m_theme;
   sigc::connection m_theme_connection;
@@ -113,6 +124,7 @@ private:
   std::condition_variable_any m_igdb_cv;
   struct IgdbRequest {
     std::string app_id;
+    std::string steam_app_id;
     std::string title;
     std::string client_id;
     std::string client_secret;
@@ -137,6 +149,26 @@ private:
   std::string m_pending_achievements_app;
   SteamAchievementsResult m_pending_achievements;
   std::unique_ptr<Gtk::Dialog> m_connections;
+  std::optional<EpicSession> m_epic_session;
+  std::string m_epic_last_error;
+  std::size_t m_epic_last_count = 0;
+  std::vector<EpicGame> m_epic_games;
+  std::unique_ptr<EpicLoginDialog> m_epic_login;
+  Gtk::Label* m_epic_status = nullptr;
+  std::jthread m_epic_thread;
+  std::mutex m_epic_mutex;
+  std::condition_variable_any m_epic_cv;
+  struct EpicRequest {
+    EpicSession session;
+    bool pending = false;
+  };
+  EpicRequest m_epic_request;
+  Glib::Dispatcher m_epic_dispatcher;
+  sigc::connection m_epic_connection;
+  std::mutex m_epic_result_mutex;
+  std::vector<EpicGame> m_pending_epic_games;
+  std::optional<EpicSession> m_pending_epic_session;
+  std::string m_pending_epic_error;
   Gtk::Entry* m_igdb_client_id_entry = nullptr;
   Gtk::Entry* m_igdb_secret_entry = nullptr;
 };

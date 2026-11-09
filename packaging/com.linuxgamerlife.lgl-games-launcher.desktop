@@ -2,11 +2,11 @@
 Type=Application
 Name=LGL Games Launcher
 GenericName=Game Library
-Comment=A local Steam library for Fedora
+Comment=A local Steam and Faugus game library for Fedora
 Exec=lgl-games-launcher
 Icon=lgl-games-launcher
 Terminal=false
 Categories=Game;
-Keywords=Games;Steam;Library;Launcher;
+Keywords=Games;Steam;Faugus;Epic;EA;Ubisoft;Library;Launcher;
 StartupNotify=true
 StartupWMClass=com.linuxgamerlife.lgl-games-launcher

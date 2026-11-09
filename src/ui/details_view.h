@@ -66,6 +66,7 @@ private:
   Gtk::Box* make_stat_card(const std::string& label, Gtk::Label& value);
 
   std::string m_app_id;
+  bool m_is_steam = true;
   bool m_is_favorite = false;
   bool m_is_hidden = false;
   std::string m_status;
@@ -98,6 +99,8 @@ private:
   Gtk::Button m_new_collection;
 
   Gtk::Box m_stats;
+  Gtk::Box* m_achievements_card = nullptr;
+  Gtk::Box* m_completion_card = nullptr;
   Gtk::Label m_playtime_value;
   Gtk::Label m_achievements_value;
   Gtk::Label m_completion_value;

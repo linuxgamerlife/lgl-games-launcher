@@ -7,6 +7,8 @@
 #include <gtkmm/image.h>
 #include <gtkmm/separator.h>
 
+#include <algorithm>
+#include <cctype>
 #include <filesystem>
 #include <string>
 
@@ -45,8 +47,10 @@ DetailsView::DetailsView() : Gtk::Box(Gtk::Orientation::VERTICAL) {
   m_stats.set_spacing(12);
   m_stats.set_homogeneous(true);
   m_stats.append(*make_stat_card("PLAYTIME", m_playtime_value));
-  m_stats.append(*make_stat_card("ACHIEVEMENTS", m_achievements_value));
-  m_stats.append(*make_stat_card("COMPLETION", m_completion_value));
+  m_achievements_card = make_stat_card("ACHIEVEMENTS", m_achievements_value);
+  m_stats.append(*m_achievements_card);
+  m_completion_card = make_stat_card("COMPLETION", m_completion_value);
+  m_stats.append(*m_completion_card);
   body->append(m_stats);
 
   build_igdb();
@@ -343,17 +347,49 @@ void DetailsView::build_achievements() {
 }
 
 void DetailsView::set_game(const Game& game) {
-  m_app_id = game.steam.app_id;
-  m_title.set_text(game.steam.name);
-  m_source.set_text("STEAM");
-  m_installed.set_text(game.steam.installed
-                           ? "Installed locally through Steam."
-                           : "Not installed. Play opens Steam's install prompt.");
-  m_protondb.set_uri("https://www.protondb.com/app/" + m_app_id);
+  m_app_id = game.app_id;
+  m_is_steam = game.is_steam();
+  m_title.set_text(game.title);
+  std::string source = game.source;
+  std::transform(source.begin(), source.end(), source.begin(),
+                 [](unsigned char ch) { return static_cast<char>(std::toupper(ch)); });
+  const bool is_store = game.kind == GameKind::Store;
+  m_source.set_text(m_is_steam ? "STEAM" : (is_store ? source : "FAUGUS · " + source));
+  if (m_is_steam) {
+    m_installed.set_text(game.installed
+                             ? "Installed locally through Steam."
+                             : "Not installed. Play opens Steam's install prompt.");
+  } else if (is_store) {
+    m_installed.set_text(
+        game.installed ? "Installed through " + game.source + " in a Faugus prefix."
+                       : "Not installed. Play opens " + game.source + " so you can install it.");
+  } else {
+    m_installed.set_text("Installed locally through Faugus (" + game.source + ").");
+  }
+  const bool has_steam_id = !game.steam_app_id.empty();
+  m_protondb.set_visible(has_steam_id);
+  if (has_steam_id) {
+    m_protondb.set_uri("https://www.protondb.com/app/" + game.steam_app_id);
+  }
   m_pcgamingwiki.set_uri("https://www.pcgamingwiki.com/w/index.php?search=" +
-                         escape_uri(game.steam.name));
-  m_playtime_value.set_text(format_playtime(game.steam.playtime_minutes));
-  m_play_button.set_label(game.steam.installed ? "▶  PLAY" : "INSTALL IN STEAM");
+                         escape_uri(game.title));
+  m_playtime_value.set_text(format_playtime(game.playtime_minutes));
+  if (is_store) {
+    m_play_button.set_label(game.executable.empty() ? "OPEN " + source : "▶  PLAY");
+    m_manage_button.set_visible(!game.executable.empty());
+  } else {
+    m_play_button.set_label(m_is_steam && !game.installed ? "INSTALL IN STEAM" : "▶  PLAY");
+    m_manage_button.set_visible(true);
+  }
+  m_achievement_section.set_visible(m_is_steam);
+  if (m_achievements_card != nullptr) {
+    m_achievements_card->set_visible(m_is_steam);
+  }
+  if (m_completion_card != nullptr) {
+    m_completion_card->set_visible(m_is_steam);
+  }
+  m_manage_button.set_label(m_is_steam ? "MANAGE IN STEAM"
+                                       : (is_store ? "OPEN " + source : "OPEN FAUGUS"));
   update_flags(game.flags);
 
   update_artwork(game);
@@ -374,11 +410,13 @@ void DetailsView::set_game(const Game& game) {
 }
 
 void DetailsView::update_artwork(const Game& game) {
-  std::string hero = game.steam.hero_path;
+  std::string hero = game.hero_path;
   if (hero.empty() || !std::filesystem::is_regular_file(hero)) {
-    hero = game.steam.cover_path;
+    hero = game.is_steam() ? game.cover_path : std::string();
   }
-  std::string cover = game.steam.cover_path;
+  std::string cover = game.cover_path;
+  m_cover.set_content_fit(game.kind == GameKind::Faugus ? Gtk::ContentFit::CONTAIN
+                                                       : Gtk::ContentFit::COVER);
   if (cover.empty() || !std::filesystem::is_regular_file(cover)) {
     cover = hero;
   }

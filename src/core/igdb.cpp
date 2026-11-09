@@ -184,7 +184,13 @@ bool IgdbClient::post(const std::string& url, const std::string& body,
 
 bool IgdbClient::fetch(const std::string& steam_app_id, const std::string& title,
                        IgdbInfo* info, std::string* error) {
-  if (info == nullptr || !numeric(steam_app_id)) {
+  if (info == nullptr) {
+    if (error != nullptr) {
+      *error = "IGDB request is invalid.";
+    }
+    return false;
+  }
+  if (!steam_app_id.empty() && !numeric(steam_app_id)) {
     if (error != nullptr) {
       *error = "Invalid Steam app id.";
     }
@@ -198,7 +204,8 @@ bool IgdbClient::fetch(const std::string& steam_app_id, const std::string& title
   std::string last_error;
   const std::string external_query =
       "fields game; where uid = \"" + steam_app_id + "\" & category = 1; limit 1;";
-  if (post("https://api.igdb.com/v4/external_games", external_query, "text/plain",
+  if (!steam_app_id.empty() &&
+      post("https://api.igdb.com/v4/external_games", external_query, "text/plain",
            m_client_id, m_token, &response, &last_error)) {
     JsonParser* parser = json_parser_new();
     if (json_parser_load_from_data(parser, response.c_str(),

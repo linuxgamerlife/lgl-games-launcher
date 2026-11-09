@@ -4,6 +4,31 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses semantic
 versioning once implementation starts.
 
+## [0.2.0] — 2026-11-09
+
+### Added
+
+- Faugus library discovery from the native or Flatpak `games.json`, including the Ubisoft
+  Connect, EA App and Epic Games launchers managed by Faugus.
+- Source filter for All sources, Steam, Faugus, Epic, EA and Ubisoft.
+- Games installed by Ubisoft Connect, EA App and Epic Games inside each Faugus prefix,
+  discovered from Ubisoft install state, Epic manifests and EA install directories.
+- Store games resolve real Steam cover and hero art through Steam's official store
+  browse API, including new releases whose plain asset paths 404.
+- Direct store-game launch through Faugus's Proton runner; Play falls back to the store
+  client when no executable is known.
+- Optional Epic Games sign-in with an embedded login window, owned-library sync, real Epic
+  catalog cover art, and session storage in the Secret Service.
+- Faugus playtime, last-played dates, covers and icons.
+- Faugus launch through `faugus-launcher --game <id>`, with a Flatpak fallback.
+- Open Faugus action on Faugus details pages.
+
+### Changed
+
+- The library and details page are source-agnostic instead of Steam-only.
+- The Faugus source filter shows only store launchers; store sources show only games.
+- IGDB title lookup works for entries without a Steam app id.
+
 ## [0.0.1-2] — 2026-11-09
 
 ### Added

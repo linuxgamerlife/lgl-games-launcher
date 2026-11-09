@@ -1,5 +1,7 @@
 #include "ui/window.h"
 
+#include "ui/epic_login.h"
+
 #include "core/artwork.h"
 #include "core/secret_store.h"
 #include "core/format.h"
@@ -9,6 +11,7 @@
 #include <adwaita.h>
 #include <giomm/menu.h>
 #include <glibmm/main.h>
+#include <glibmm/miscutils.h>
 #include <gtkmm/gestureclick.h>
 #include <gtkmm/grid.h>
 #include <gtkmm/separator.h>
@@ -51,6 +54,41 @@ Window::Window(const Glib::RefPtr<Gtk::Application>& application)
     }
     if (app_id == m_details.current_app_id()) {
       m_details.set_igdb(info);
+    }
+  });
+  m_epic_connection = m_epic_dispatcher.connect([this] {
+    std::vector<EpicGame> games;
+    std::optional<EpicSession> session;
+    std::string error;
+    {
+      std::lock_guard lock(m_epic_result_mutex);
+      games = std::move(m_pending_epic_games);
+      session = std::move(m_pending_epic_session);
+      error = std::move(m_pending_epic_error);
+      m_pending_epic_games.clear();
+      m_pending_epic_session.reset();
+      m_pending_epic_error.clear();
+    }
+    epic_log("window: dispatch games=" + std::to_string(games.size()) +
+             " error=" + error);
+    m_epic_last_error = error;
+    m_epic_last_count = games.size();
+    if (!error.empty()) {
+      update_epic_status();
+      show_notice("Epic: " + error, true);
+      return;
+    }
+    if (session.has_value()) {
+      m_epic_session = session;
+      (void)EpicClient::save_session(*session);
+    }
+    m_epic_games = std::move(games);
+    merge_epic_games();
+    update_epic_status();
+    if (m_epic_games.empty()) {
+      show_notice("Epic returned no owned games. Check that this account owns PC games.", true);
+    } else {
+      show_notice("Epic library loaded: " + std::to_string(m_epic_games.size()) + " games.");
     }
   });
   m_achievements_connection = m_achievements_dispatcher.connect([this] {
@@ -160,6 +198,11 @@ Window::Window(const Glib::RefPtr<Gtk::Application>& application)
       false);
 
   start_metadata_workers();
+  start_epic_worker();
+  m_epic_session = EpicClient::load_session();
+  if (m_epic_session.has_value()) {
+    request_epic_library();
+  }
   m_scan_idle = Glib::signal_idle().connect([this] {
     scan_and_load();
     return false;
@@ -179,6 +222,11 @@ Window::~Window() {
     m_achievements_cv.notify_all();
     m_achievements_thread.join();
   }
+  if (m_epic_thread.joinable()) {
+    m_epic_thread.request_stop();
+    m_epic_cv.notify_all();
+    m_epic_thread.join();
+  }
   for (std::jthread& thread : m_artwork_threads) {
     if (thread.joinable()) {
       thread.request_stop();
@@ -189,6 +237,7 @@ Window::~Window() {
   m_artwork_connection.disconnect();
   m_igdb_connection.disconnect();
   m_achievements_connection.disconnect();
+  m_epic_connection.disconnect();
   if (m_dark_handler != 0) {
     auto* manager = adw_style_manager_get_default();
     if (manager != nullptr) {
@@ -219,7 +268,7 @@ void Window::build_header() {
   m_header.pack_end(m_home_button);
 
   m_refresh_button.set_icon_name("view-refresh-symbolic");
-  m_refresh_button.set_tooltip_text("Rescan Steam library (Ctrl+R)");
+  m_refresh_button.set_tooltip_text("Rescan library (Ctrl+R)");
   m_refresh_button.set_action_name("win.refresh");
   m_header.pack_end(m_refresh_button);
 
@@ -227,7 +276,7 @@ void Window::build_header() {
 
   auto library_section = Gio::Menu::create();
   library_section->append("Show All Games", "win.home");
-  library_section->append("Refresh Steam library", "win.refresh");
+  library_section->append("Refresh library", "win.refresh");
   library_section->append("Search", "win.search");
   menu->append_section(library_section);
 
@@ -318,34 +367,61 @@ void Window::apply_title_bar(bool system, bool runtime) {
 
 void Window::scan_and_load() {
   m_scan = SteamScanner::scan();
-  m_games = load_games(m_scan, m_flags);
+  m_faugus_scan = FaugusScanner::scan();
+  m_store_scan = StoreScanner::scan(m_faugus_scan);
+  m_games = load_games(m_scan, m_faugus_scan, m_store_scan, m_flags);
   apply_cached_covers();
   m_library.set_games(m_games);
-  if (!m_scan.warnings.empty()) {
-    show_notice(m_scan.warnings.front(), true);
-  } else if (m_games.empty()) {
-    show_notice("No Steam games found. Check that Steam is installed and has a library.", true);
+  std::vector<std::string> warnings = m_scan.warnings;
+  warnings.insert(warnings.end(), m_faugus_scan.warnings.begin(),
+                  m_faugus_scan.warnings.end());
+  warnings.insert(warnings.end(), m_store_scan.warnings.begin(),
+                  m_store_scan.warnings.end());
+  if (m_games.empty()) {
+    show_notice(warnings.empty()
+                    ? "No games found. Check that Steam or Faugus is installed and has a library."
+                    : warnings.front(),
+                true);
+  } else if (!warnings.empty()) {
+    show_notice(warnings.front());
   }
   fetch_missing_covers();
+  if (!m_epic_games.empty()) {
+    merge_epic_games();
+  }
 }
 
 void Window::apply_cached_covers() {
   for (Game& game : m_games) {
-    if (!game.steam.cover_path.empty()) {
-      continue;
+    if (game.cover_path.empty()) {
+      if (game.is_steam()) {
+        game.cover_path = artwork::cached_cover_path(game.steam_app_id);
+      } else if (game.kind == GameKind::Store) {
+        game.cover_path = artwork::cached_store_cover(game.title);
+      }
     }
-    const std::string cached = artwork::cached_cover_path(game.steam.app_id);
-    if (!cached.empty()) {
-      game.steam.cover_path = cached;
+    if (game.kind == GameKind::Store && game.hero_path.empty()) {
+      game.hero_path = artwork::cached_store_hero(game.title);
     }
   }
 }
 
 void Window::fetch_missing_covers() {
-  std::vector<std::string> missing;
+  struct Task {
+    std::string steam_app_id;
+    std::string title;
+    std::string source;
+    bool store = false;
+  };
+  std::vector<Task> missing;
   for (const Game& game : m_games) {
-    if (game.steam.cover_path.empty()) {
-      missing.push_back(game.steam.app_id);
+    if (!game.cover_path.empty()) {
+      continue;
+    }
+    if (game.is_steam()) {
+      missing.push_back({game.steam_app_id, {}, {}, false});
+    } else if (game.kind == GameKind::Store) {
+      missing.push_back({{}, game.title, game.source, true});
     }
   }
   m_artwork_threads.clear();
@@ -357,7 +433,11 @@ void Window::fetch_missing_covers() {
             if (stop.stop_requested()) {
               return;
             }
-            artwork::fetch_steam_cover(missing[index], nullptr, nullptr);
+            if (missing[index].store) {
+              artwork::ensure_store_artwork(missing[index].title, nullptr);
+            } else {
+              artwork::fetch_steam_cover(missing[index].steam_app_id, nullptr, nullptr);
+            }
           }
           m_artwork_dispatcher.emit();
         });
@@ -366,8 +446,9 @@ void Window::fetch_missing_covers() {
 
 void Window::refresh() {
   scan_and_load();
-  if (m_scan.warnings.empty() && !m_games.empty()) {
-    show_notice("Steam library refreshed: " + std::to_string(m_games.size()) + " games.");
+  if (m_scan.warnings.empty() && m_faugus_scan.warnings.empty() &&
+      m_store_scan.warnings.empty() && !m_games.empty()) {
+    show_notice("Library refreshed: " + std::to_string(m_games.size()) + " games.");
   }
 }
 
@@ -432,15 +513,36 @@ void Window::play(const std::string& app_id) {
   if (game == nullptr) {
     return;
   }
-  const bool flatpak =
-      game->steam.library_path.find("/com.valvesoftware.Steam/") != std::string::npos;
-  const LaunchCommand command = steam_launch_command(*game, flatpak);
+  if (game->kind == GameKind::Store) {
+    LaunchCommand direct = store_launch_command(*game);
+    std::string error;
+    if (direct.program.empty()) {
+      const LaunchCommand client = faugus_launch_command_for(game->store_launcher_gameid);
+      if (!launch(client, &error)) {
+        show_notice(error, true);
+        return;
+      }
+      show_notice("Opening " + game->source + ". Start " + game->title +
+                  " from the client.");
+      return;
+    }
+    if (!launch(direct, &error)) {
+      show_notice(error, true);
+      return;
+    }
+    show_notice("Launching " + game->title + "…");
+    return;
+  }
+
+  const LaunchCommand command = game->is_steam()
+                                    ? steam_launch_command(*game, game->flatpak)
+                                    : faugus_launch_command(*game);
   std::string error;
   if (!launch(command, &error)) {
     show_notice(error, true);
     return;
   }
-  show_notice("Launching " + game->steam.name + "…");
+  show_notice("Launching " + game->title + "…");
 }
 
 void Window::toggle_favorite(const std::string& app_id, bool favorite) {
@@ -535,7 +637,8 @@ void Window::load_igdb(const std::string& app_id) {
   const std::string client_id = m_settings.igdb_client_id();
   const std::string secret = SecretStore::lookup("igdb-client-secret");
   const Game* game = find_game(app_id);
-  const std::string title = game != nullptr ? game->steam.name : std::string();
+  const std::string title = game != nullptr ? game->title : std::string();
+  const std::string steam_app_id = game != nullptr ? game->steam_app_id : std::string();
   if (client_id.empty() || secret.empty()) {
     IgdbInfo info;
     info.error = "Connect IGDB in Settings to see critic scores and length estimates.";
@@ -550,6 +653,7 @@ void Window::load_igdb(const std::string& app_id) {
   {
     std::lock_guard lock(m_igdb_mutex);
     m_igdb_request.app_id = app_id;
+    m_igdb_request.steam_app_id = steam_app_id;
     m_igdb_request.title = title;
     m_igdb_request.client_id = client_id;
     m_igdb_request.client_secret = secret;
@@ -560,6 +664,10 @@ void Window::load_igdb(const std::string& app_id) {
 
 void Window::load_achievements(const std::string& app_id) {
   if (app_id.empty()) {
+    return;
+  }
+  const Game* current = find_game(app_id);
+  if (current != nullptr && !current->is_steam()) {
     return;
   }
   if (m_scan.steam_id.empty()) {
@@ -627,6 +735,45 @@ void Window::show_connections() {
     grid->attach(*m_igdb_secret_entry, 1, 1, 1, 1);
     content->append(*grid);
 
+    auto* epic_separator = Gtk::make_managed<Gtk::Separator>(Gtk::Orientation::HORIZONTAL);
+    content->append(*epic_separator);
+    auto* epic_label = Gtk::make_managed<Gtk::Label>("EPIC GAMES");
+    epic_label->add_css_class("section-label");
+    epic_label->set_xalign(0.0F);
+    content->append(*epic_label);
+    auto* epic_note = Gtk::make_managed<Gtk::Label>(
+        "Sign in through Epic's own login page. The session token is stored in the "
+        "desktop Secret Service; your Epic password never reaches LGL.");
+    epic_note->set_wrap(true);
+    epic_note->set_xalign(0.0F);
+    epic_note->add_css_class("muted");
+    epic_note->add_css_class("small");
+    content->append(*epic_note);
+    m_epic_status = Gtk::make_managed<Gtk::Label>();
+    m_epic_status->set_xalign(0.0F);
+    m_epic_status->add_css_class("muted");
+    content->append(*m_epic_status);
+    auto* epic_buttons = Gtk::make_managed<Gtk::Box>(Gtk::Orientation::HORIZONTAL, 8);
+    auto* epic_sign_in = Gtk::make_managed<Gtk::Button>("SIGN IN TO EPIC");
+    epic_sign_in->add_css_class("gl-small");
+    epic_sign_in->signal_clicked().connect([this] { sign_in_epic(); });
+    epic_buttons->append(*epic_sign_in);
+    auto* epic_refresh = Gtk::make_managed<Gtk::Button>("REFRESH EPIC LIBRARY");
+    epic_refresh->add_css_class("gl-small");
+    epic_refresh->signal_clicked().connect([this] {
+      request_epic_library();
+      show_notice("Refreshing the Epic library…");
+    });
+    epic_buttons->append(*epic_refresh);
+    auto* epic_sign_out = Gtk::make_managed<Gtk::Button>("SIGN OUT");
+    epic_sign_out->add_css_class("gl-small");
+    epic_sign_out->signal_clicked().connect([this] {
+      sign_out_epic();
+      update_epic_status();
+    });
+    epic_buttons->append(*epic_sign_out);
+    content->append(*epic_buttons);
+
     m_connections->add_button("Remove", 2);
     m_connections->add_button("Cancel", static_cast<int>(Gtk::ResponseType::CANCEL));
     m_connections->add_button("Save", static_cast<int>(Gtk::ResponseType::OK));
@@ -673,6 +820,7 @@ void Window::show_connections() {
             ? "Twitch client secret"
             : "Stored secret — leave blank to keep");
   }
+  update_epic_status();
   m_connections->present();
 }
 
@@ -681,19 +829,33 @@ void Window::open_in_steam(const std::string& app_id) {
   if (game == nullptr || app_id.empty()) {
     return;
   }
-  const bool flatpak =
-      game->steam.library_path.find("/com.valvesoftware.Steam/") != std::string::npos;
   LaunchCommand command;
+  if (!game->is_steam()) {
+    if (game->kind == GameKind::Store) {
+      command = faugus_launch_command_for(game->store_launcher_gameid);
+    } else if (!Glib::find_program_in_path("faugus-launcher").empty()) {
+      command.program = "faugus-launcher";
+    } else {
+      command.program = "flatpak";
+      command.arguments = {"run", "io.github.Faugus.faugus-launcher"};
+    }
+    std::string error;
+    if (!launch(command, &error)) {
+      show_notice("Could not open " + game->source + ": " + error, true);
+    }
+    return;
+  }
+  LaunchCommand steam_command;
   const std::string uri = "steam://nav/games/details/" + app_id;
-  if (flatpak) {
-    command.program = "flatpak";
-    command.arguments = {"run", "com.valvesoftware.Steam", uri};
+  if (game->flatpak) {
+    steam_command.program = "flatpak";
+    steam_command.arguments = {"run", "com.valvesoftware.Steam", uri};
   } else {
-    command.program = "steam";
-    command.arguments = {uri};
+    steam_command.program = "steam";
+    steam_command.arguments = {uri};
   }
   std::string error;
-  if (!launch(command, &error)) {
+  if (!launch(steam_command, &error)) {
     show_notice("Could not open Steam: " + error, true);
   }
 }
@@ -713,7 +875,7 @@ void Window::start_metadata_workers() {
       IgdbClient client(request.client_id, request.client_secret);
       IgdbInfo info;
       std::string error;
-      if (!client.fetch(request.app_id, request.title, &info, &error)) {
+      if (!client.fetch(request.steam_app_id, request.title, &info, &error)) {
         info.error = error.empty() ? "IGDB data is unavailable." : error;
       }
       {
@@ -749,6 +911,153 @@ void Window::start_metadata_workers() {
   });
 }
 
+void Window::start_epic_worker() {
+  m_epic_thread = std::jthread([this](std::stop_token stop) {
+    while (!stop.stop_requested()) {
+      EpicRequest request;
+      {
+        std::unique_lock lock(m_epic_mutex);
+        if (!m_epic_cv.wait(lock, stop, [this] { return m_epic_request.pending; })) {
+          return;
+        }
+        request = m_epic_request;
+        m_epic_request.pending = false;
+      }
+      EpicSession session = request.session;
+      std::string error;
+      bool ok = EpicClient::refresh(&session, &error);
+      std::optional<EpicSession> saved;
+      std::vector<EpicGame> games;
+      if (ok) {
+        (void)EpicClient::save_session(session);
+        saved = session;
+        ok = EpicClient::fetch_owned_games(session, &games, &error);
+      }
+      if (ok) {
+        for (EpicGame& game : games) {
+          if (!game.cover_url.empty()) {
+            game.cover_path = artwork::fetch_image(game.cover_url, nullptr);
+          }
+          if (game.cover_path.empty()) {
+            artwork::ensure_store_artwork(game.title, nullptr);
+            game.cover_path = artwork::cached_store_cover(game.title);
+          }
+        }
+      }
+      epic_log("worker: fetched=" + std::to_string(games.size()) +
+               " error=" + (ok ? std::string() : error));
+      {
+        std::lock_guard lock(m_epic_result_mutex);
+        m_pending_epic_games = std::move(games);
+        m_pending_epic_session = std::move(saved);
+        m_pending_epic_error = ok ? std::string() : error;
+      }
+      m_epic_dispatcher.emit();
+    }
+  });
+}
+
+void Window::request_epic_library() {
+  if (!m_epic_session.has_value()) {
+    return;
+  }
+  {
+    std::lock_guard lock(m_epic_mutex);
+    m_epic_request.session = *m_epic_session;
+    m_epic_request.pending = true;
+  }
+  m_epic_cv.notify_one();
+}
+
+void Window::sign_in_epic() {
+  m_epic_login = std::make_unique<EpicLoginDialog>();
+  if (m_connections) {
+    m_epic_login->set_transient_for(*m_connections);
+  } else {
+    m_epic_login->set_transient_for(*this);
+  }
+  m_epic_login->signal_signed_in().connect([this](const EpicSession& session) {
+    if (!EpicClient::save_session(session)) {
+      show_notice("Could not store the Epic session in the Secret Service.", true);
+    }
+    m_epic_session = session;
+    update_epic_status();
+    request_epic_library();
+  });
+  m_epic_login->signal_failed().connect(
+      [this](const std::string& message) { show_notice(message, true); });
+  m_epic_login->present();
+}
+
+void Window::sign_out_epic() {
+  EpicClient::clear_session();
+  m_epic_session.reset();
+  m_epic_games.clear();
+  merge_epic_games();
+  update_epic_status();
+  show_notice("Signed out of Epic Games.");
+}
+
+void Window::update_epic_status() {
+  if (m_epic_status == nullptr) {
+    return;
+  }
+  if (!m_epic_session.has_value()) {
+    m_epic_status->set_text("Not connected.");
+    return;
+  }
+  const std::string& name = m_epic_session->display_name;
+  std::string text = name.empty() ? "Connected." : "Connected as " + name + ".";
+  if (!m_epic_last_error.empty()) {
+    text += " Last sync failed: " + m_epic_last_error;
+  } else if (m_epic_last_count == 0) {
+    text += " No owned games were returned.";
+  } else {
+    text += " " + std::to_string(m_epic_last_count) + " owned games.";
+  }
+  m_epic_status->set_text(text);
+}
+
+void Window::merge_epic_games() {
+  m_games = load_games(m_scan, m_faugus_scan, m_store_scan, m_flags);
+  for (const EpicGame& owned : m_epic_games) {
+    const std::string normalized = normalise_title(owned.title);
+    auto found = std::find_if(
+        m_games.begin(), m_games.end(), [&owned, &normalized](const Game& game) {
+          return game.kind == GameKind::Store && game.source == "Epic" &&
+                 (game.epic_app_name == owned.app_name ||
+                  normalise_title(game.title) == normalized);
+        });
+    if (found != m_games.end()) {
+      found->epic_app_name = owned.app_name;
+      if (!owned.title.empty()) {
+        found->title = owned.title;
+      }
+      if (found->cover_path.empty()) {
+        found->cover_path = owned.cover_path;
+      }
+      if (found->hero_path.empty()) {
+        found->hero_path = owned.cover_path;
+      }
+      continue;
+    }
+    Game game;
+    game.app_id = "store:epic:" + owned.app_name;
+    game.epic_app_name = owned.app_name;
+    game.store_launcher_gameid = "epic-games";
+    game.title = owned.title;
+    game.source = "Epic";
+    game.kind = GameKind::Store;
+    game.installed = false;
+    game.cover_path = owned.cover_path;
+    game.hero_path = owned.cover_path;
+    game.flags = m_flags.get(game.app_id);
+    m_games.push_back(std::move(game));
+  }
+  apply_cached_covers();
+  m_library.set_games(m_games);
+}
+
 void Window::show_about() {
   if (!m_about) {
     m_about = std::make_unique<Gtk::AboutDialog>();
@@ -758,7 +1067,7 @@ void Window::show_about() {
     m_about->set_website_label("Project page and issue tracker");
     m_about->set_authors({"LinuxGamerLife", "Omakade contributors"});
     m_about->set_comments(
-        "A local Steam library for Fedora.\n\nInspired by Omakade by Tyler South.\nBuilt with GTK 4 and libadwaita.");
+        "A local Steam and Faugus library for Fedora.\n\nInspired by Omakade by Tyler South.\nBuilt with GTK 4 and libadwaita.");
     m_about->set_license_type(Gtk::License::GPL_3_0);
     m_about->set_logo_icon_name("lgl-games-launcher");
     m_about->set_transient_for(*this);
@@ -783,14 +1092,14 @@ void Window::on_style_manager_dark(GObject*, GParamSpec*, gpointer data) {
 
 Game* Window::find_game(const std::string& app_id) {
   const auto found = std::find_if(m_games.begin(), m_games.end(), [&app_id](const Game& game) {
-    return game.steam.app_id == app_id;
+    return game.app_id == app_id;
   });
   return found == m_games.end() ? nullptr : &*found;
 }
 
 const Game* Window::find_game(const std::string& app_id) const {
   const auto found = std::find_if(m_games.begin(), m_games.end(), [&app_id](const Game& game) {
-    return game.steam.app_id == app_id;
+    return game.app_id == app_id;
   });
   return found == m_games.end() ? nullptr : &*found;
 }

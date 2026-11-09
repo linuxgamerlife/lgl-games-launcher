@@ -47,6 +47,7 @@ private:
   std::vector<Game> m_games;
   std::map<std::string, Game> m_by_id;
   std::string m_sort = "title";
+  std::string m_source = "all";
   bool m_show_hidden = false;
   bool m_installed_only = false;
   bool m_favorites_only = false;
@@ -57,6 +58,8 @@ private:
   Gtk::ToggleButton m_favorites;
   Gtk::CheckButton m_show_hidden_button;
   Gtk::CheckButton m_installed_only_button;
+  Gtk::DropDown m_source_dropdown;
+  Glib::RefPtr<Gtk::StringList> m_source_model;
   Gtk::DropDown m_sort_dropdown;
   Glib::RefPtr<Gtk::StringList> m_sort_model;
   Gtk::Stack m_stack;

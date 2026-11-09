@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.20)
-project(lgl-games-launcher VERSION 0.0.1 LANGUAGES C CXX)
+project(lgl-games-launcher VERSION 0.2.0 LANGUAGES C CXX)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -31,6 +31,7 @@ pkg_check_modules(GIOMM REQUIRED IMPORTED_TARGET giomm-2.68)
 pkg_check_modules(LIBSOUP REQUIRED IMPORTED_TARGET libsoup-3.0)
 pkg_check_modules(JSONGLIB REQUIRED IMPORTED_TARGET json-glib-1.0)
 pkg_check_modules(LIBSECRET REQUIRED IMPORTED_TARGET libsecret-1)
+pkg_check_modules(WEBKIT REQUIRED IMPORTED_TARGET webkitgtk-6.0)
 pkg_check_modules(LIBXML2 REQUIRED IMPORTED_TARGET libxml-2.0)
 find_package(SQLite3 REQUIRED)
 find_program(GLIB_COMPILE_RESOURCES glib-compile-resources REQUIRED)
@@ -51,6 +52,8 @@ add_library(lgl_launcher_core STATIC
   src/core/settings.cpp
   src/core/valve_key_values.cpp
   src/core/steam.cpp
+  src/core/faugus.cpp
+  src/core/store.cpp
   src/core/library.cpp
   src/core/flags_store.cpp
   src/core/launch.cpp
@@ -59,6 +62,7 @@ add_library(lgl_launcher_core STATIC
   src/core/artwork.cpp
   src/core/secret_store.cpp
   src/core/igdb.cpp
+  src/core/epic.cpp
   src/core/steam_achievements.cpp
 )
 target_include_directories(lgl_launcher_core PUBLIC ${PROJECT_SOURCE_DIR}/src)
@@ -71,11 +75,12 @@ add_executable(lgl-games-launcher
   src/ui/window.cpp
   src/ui/library_view.cpp
   src/ui/details_view.cpp
+  src/ui/epic_login.cpp
 )
 target_compile_definitions(lgl-games-launcher PRIVATE
   LGL_GAMES_LAUNCHER_VERSION="${PROJECT_VERSION}")
 target_link_libraries(lgl-games-launcher PRIVATE
-  lgl_launcher_core PkgConfig::GTKMM PkgConfig::ADWAITA)
+  lgl_launcher_core PkgConfig::GTKMM PkgConfig::ADWAITA PkgConfig::WEBKIT)
 
 install(TARGETS lgl-games-launcher RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 install(FILES packaging/com.linuxgamerlife.lgl-games-launcher.desktop

@@ -1,7 +1,7 @@
 Name:           lgl-games-launcher
-Version:        0.0.1
-Release:        2%{?dist}
-Summary:        Steam library and launcher for Fedora
+Version:        0.2.0
+Release:        1%{?dist}
+Summary:        Steam and Faugus game library and launcher for Fedora
 
 License:        GPL-3.0-or-later
 URL:            https://github.com/linuxgamerlife/lgl-games-launcher
@@ -20,6 +20,7 @@ BuildRequires:  pkgconfig(sqlite3)
 BuildRequires:  pkgconfig(libsoup-3.0)
 BuildRequires:  pkgconfig(json-glib-1.0)
 BuildRequires:  pkgconfig(libsecret-1)
+BuildRequires:  pkgconfig(webkitgtk-6.0)
 BuildRequires:  pkgconfig(libxml-2.0)
 BuildRequires:  desktop-file-utils
 BuildRequires:  appstream
@@ -27,9 +28,11 @@ BuildRequires:  appstream
 Requires:       hicolor-icon-theme
 
 %description
-LGL Games Launcher reads installed Steam games from local manifests, presents
-them in a GTK library, and launches them through Steam or the Flatpak Steam
-client. This is the Steam-only MVP.
+LGL Games Launcher reads Steam and Faugus games from local library data,
+presents them in a GTK library, and launches them through the original
+launcher. Faugus entries include the Ubisoft Connect, EA App and Epic Games
+launchers it manages, plus the games those clients installed. Epic sign-in can
+also list owned Epic games, installed or not.
 
 %prep
 %autosetup -n %{name}-%{version}
@@ -57,6 +60,13 @@ appstreamcli validate --no-net %{buildroot}%{_datadir}/metainfo/com.linuxgamerli
 %{_datadir}/icons/hicolor/256x256/apps/%{name}.png
 
 %changelog
+* Mon Nov 09 2026 LinuxGamerLife - 0.2.0-1
+- Add Faugus discovery, including Ubisoft Connect, EA App and Epic Games entries
+- Add store game discovery, art and direct launch for Ubisoft Connect, EA App and Epic Games
+- Add optional Epic sign-in and owned-library sync
+- Add a source filter for Steam, Faugus, Epic, EA and Ubisoft
+- Launch Faugus entries with faugus-launcher and open Faugus from the details page
+
 * Mon Nov 09 2026 LinuxGamerLife - 0.0.1-2
 - Ship the full GPL-3.0 licence text in LICENSE as an RPM licence file
 

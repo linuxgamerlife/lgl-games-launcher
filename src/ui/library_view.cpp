@@ -12,6 +12,7 @@
 #include <pangomm/layout.h>
 
 #include <algorithm>
+#include <cctype>
 #include <filesystem>
 #include <string>
 #include <utility>
@@ -52,28 +53,29 @@ public:
     const int height = cover_size * 3 / 2;
     m_cover_frame.set_size_request(cover_size, height);
     m_picture.set_size_request(cover_size, height);
+    m_picture.set_content_fit(game.kind == GameKind::Faugus ? Gtk::ContentFit::CONTAIN
+                                                           : Gtk::ContentFit::COVER);
     const bool has_cover =
-        !game.steam.cover_path.empty() &&
-        std::filesystem::is_regular_file(game.steam.cover_path);
+        !game.cover_path.empty() && std::filesystem::is_regular_file(game.cover_path);
     if (has_cover) {
       try {
-        m_picture.set_filename(game.steam.cover_path);
+        m_picture.set_filename(game.cover_path);
       } catch (const Glib::Error&) {
         m_picture.set_resource("/com/linuxgamerlife/gameslauncher/icons/no-art.png");
       }
     } else {
       m_picture.set_resource("/com/linuxgamerlife/gameslauncher/icons/no-art.png");
     }
-    m_title.set_text(game.steam.name);
-    std::string meta = "Steam";
-    if (!game.steam.installed) {
+    m_title.set_text(game.title);
+    std::string meta = game.source;
+    if (!game.installed) {
       meta += " · not installed";
-    } else if (game.steam.playtime_minutes > 0) {
-      meta += " · " + format_playtime(game.steam.playtime_minutes);
+    } else if (game.playtime_minutes > 0) {
+      meta += " · " + format_playtime(game.playtime_minutes);
     }
     m_meta.set_text(meta);
     m_favorite.set_text(game.flags.favorite ? "★" : "");
-    set_tooltip_text(game.steam.name);
+    set_tooltip_text(game.title);
     set_size_request(cover_size + 12, -1);
   }
 
@@ -97,7 +99,7 @@ LibraryView::LibraryView()
   m_filter_bar.set_spacing(8);
   m_filter_bar.add_css_class("filter-bar");
 
-  m_search.set_placeholder_text("Search Steam games…");
+  m_search.set_placeholder_text("Search games…");
   m_search.set_hexpand(true);
   m_search.add_css_class("search-entry");
   m_search.signal_search_changed().connect([this] { apply(); });
@@ -128,6 +130,36 @@ LibraryView::LibraryView()
     apply();
   });
   m_filter_bar.append(m_installed_only_button);
+
+  m_source_model = Gtk::StringList::create(
+      {"All sources", "Steam", "Faugus", "Epic", "EA", "Ubisoft"});
+  m_source_dropdown.set_model(m_source_model);
+  m_source_dropdown.set_selected(0);
+  m_source_dropdown.set_tooltip_text("Filter by source");
+  m_source_dropdown.property_selected().signal_changed().connect([this] {
+    switch (m_source_dropdown.get_selected()) {
+      case 1:
+        m_source = "steam";
+        break;
+      case 2:
+        m_source = "faugus";
+        break;
+      case 3:
+        m_source = "epic";
+        break;
+      case 4:
+        m_source = "ea";
+        break;
+      case 5:
+        m_source = "ubisoft";
+        break;
+      default:
+        m_source = "all";
+        break;
+    }
+    apply();
+  });
+  m_filter_bar.append(m_source_dropdown);
 
   m_sort_model = Gtk::StringList::create({"Title", "Recently played", "Playtime"});
   m_sort_dropdown.set_model(m_sort_model);
@@ -182,7 +214,7 @@ LibraryView::LibraryView()
   m_scroller.set_child(m_grid);
   m_scroller.add_css_class("gl-scroller");
 
-  m_empty.set_text("No Steam games found.\nCheck that Steam is installed and that this account has a library.");
+  m_empty.set_text("No games found.\nCheck that Steam or Faugus is installed and has a library.");
   m_empty.set_wrap(true);
   m_empty.set_justify(Gtk::Justification::CENTER);
   m_empty.add_css_class("muted");
@@ -200,7 +232,7 @@ void LibraryView::set_games(std::vector<Game> games) {
   m_games = std::move(games);
   m_by_id.clear();
   for (const Game& game : m_games) {
-    m_by_id[game.steam.app_id] = game;
+    m_by_id[game.app_id] = game;
   }
   apply();
 }
@@ -221,7 +253,7 @@ void LibraryView::set_show_hidden(bool value) {
 void LibraryView::update_game_flags(const std::string& app_id, const GameFlags& flags) {
   GameFlags previous;
   for (Game& game : m_games) {
-    if (game.steam.app_id == app_id) {
+    if (game.app_id == app_id) {
       previous = game.flags;
       game.flags = flags;
       break;
@@ -280,15 +312,33 @@ void LibraryView::apply() {
   filter.favorites_only = m_favorites_only;
   filter.show_hidden = m_show_hidden;
   filter.installed_only = m_installed_only;
+  filter.source = m_source;
   const auto visible = filter_games(m_games, filter);
 
   std::vector<Glib::ustring> ids;
   ids.reserve(visible.size());
   for (const Game& game : visible) {
-    ids.emplace_back(game.steam.app_id);
+    ids.emplace_back(game.app_id);
   }
   m_model->splice(0, m_model->get_n_items(), ids);
   if (visible.empty()) {
+    if (m_source == "steam") {
+      m_empty.set_text("No Steam games found.\nCheck that Steam is installed and has a library.");
+    } else if (m_source == "faugus") {
+      m_empty.set_text("No Faugus launchers found.\nAdd a store launcher in Faugus.");
+    } else if (m_source == "epic") {
+      m_empty.set_text(
+          "No Epic games found.\nSign in to Epic in Settings → Connections, or install a "
+          "game through Epic in Faugus.");
+    } else if (m_source == "ea" || m_source == "ubisoft") {
+      std::string name = m_source == "ea" ? "EA" : m_source;
+      name[0] = static_cast<char>(std::toupper(static_cast<unsigned char>(name[0])));
+      m_empty.set_text("No " + name +
+                       " games found.\nInstall a game through " + name +
+                       " in Faugus, then refresh.");
+    } else {
+      m_empty.set_text("No games found.\nCheck that Steam or Faugus is installed and has a library.");
+    }
     m_stack.set_visible_child(m_empty);
   } else {
     m_stack.set_visible_child(m_scroller);

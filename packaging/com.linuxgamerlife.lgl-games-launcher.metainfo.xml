@@ -2,7 +2,7 @@
 <component type="desktop-application">
   <id>com.linuxgamerlife.lgl-games-launcher</id>
   <name>LGL Games Launcher</name>
-  <summary>A local Steam library for Fedora</summary>
+  <summary>A local Steam and Faugus game library for Fedora</summary>
   <metadata_license>CC0-1.0</metadata_license>
   <project_license>GPL-3.0-or-later</project_license>
   <developer id="com.linuxgamerlife">
@@ -10,20 +10,27 @@
   </developer>
   <description>
     <p>
-      LGL Games Launcher discovers installed Steam games from local manifests,
-      presents them in a GTK library, and launches them through Steam or the
-      Flatpak Steam client.
+      LGL Games Launcher discovers Steam games from local manifests and Faugus
+      games from its local library, presents them in a GTK library, and launches
+      them through Steam or Faugus. Faugus entries include the Ubisoft Connect,
+      EA App and Epic Games launchers it manages, plus the games those clients
+      installed. Optional Epic sign-in lists owned Epic games, installed or not.
     </p>
     <p>
-      This is the Steam-only MVP. Other launchers, emulators, playtime
-      recording, Game Mode, saves, backups and streaming are not part of this
-      build.
+      Everything is local. Other launchers, direct store account libraries,
+      emulators, playtime recording, Game Mode, saves, backups and streaming
+      are not part of this build.
     </p>
   </description>
   <launchable type="desktop-id">com.linuxgamerlife.lgl-games-launcher.desktop</launchable>
   <url type="homepage">https://github.com/linuxgamerlife/lgl-games-launcher</url>
   <content_rating type="oars-1.1" />
   <releases>
+    <release version="0.2.0" date="2026-11-09">
+      <description>
+        <p>Faugus library discovery, store launchers and a source filter.</p>
+      </description>
+    </release>
     <release version="0.0.1" date="2026-11-09">
       <description>
         <p>Initial Steam-only MVP: discovery, library browsing, details and launch.</p>

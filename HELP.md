@@ -1,79 +1,87 @@
 # LGL Games Launcher help
 
-> **Draft for the design phase.** The application is not implemented. This file is the outline
-> for the packaged user help and must be completed when the corresponding features ship.
-
 ## Getting started
 
-- What the library does and does not do.
-- Supported launchers and emulators on Fedora.
-- First run: detect sources, choose folders, import an existing Omakade library.
-- Offline use.
+LGL Games Launcher is a local library for Steam and Faugus on Fedora. It reads the library
+data each launcher already keeps on disk. No account sign-in is required, and no library data
+is uploaded.
+
+- **Steam:** installed and owned-but-uninstalled games, playtime and achievements.
+- **Faugus:** games and launchers stored in Faugus, including Ubisoft Connect, EA App and
+  Epic Games.
+- **Stores:** games installed by those clients inside a Faugus prefix, found wherever the
+  store placed them. Owned-but-uninstalled store games are not listed; that needs the
+  store's account API.
+- Browsing works offline. IGDB lookups are optional and only run when connected.
+
+If a source is missing, make sure the launcher has been started at least once so it has
+written its local library.
 
 ## The library
 
-- Grid and list views.
-- Search, filters, sort.
-- Favourites, hidden games, tags, collections.
-- Saved filters.
-- Game details and Play.
+- The grid shows every detected entry with its source label and playtime.
+- **Search** matches titles, tags, sources and app ids.
+- **Sort** by title, recently played or playtime.
+- **Source** filters All sources, Steam, Faugus, Epic, EA and Ubisoft. Faugus shows the
+  store launchers; Ubisoft, EA and Epic show the games installed by that store.
+- **Installed only** hides Steam entries that are not installed. Faugus entries are always
+  installed.
+- **Favourites** and **Show hidden** control the personal view.
+- **Home** (`Ctrl+H`) clears search, favourites, installed-only, source and hidden filters.
 
-## Sources
+Use the mouse Back/Forward buttons or `Alt+Left`/`Alt+Right` to move through history.
 
-- Steam (native and Flatpak).
-- Heroic.
-- Lutris.
-- GOG.
-- RetroArch and ROM folders.
-- Emulators and native ports.
-- Manual games.
-- Source diagnostics.
+## Game details
 
-## Play and Game Mode
-
-- How launching works and what stays with the launcher.
-- Playtime tracking.
-- Controller navigation.
-- Game Mode on KineticWE.
-- Leaving a game and returning to the desktop.
-- What is unavailable on other Wayland sessions.
-
-## Saves and backups
-
-- Save protection and versions.
-- Restoring a save.
-- Library backup and restore.
-- What is not included (ROMs, saves, credentials).
+- **Play** starts the game through Steam or Faugus. Store games start directly through
+  Faugus's Proton runner; if the executable is unknown, Play opens the store client instead.
+- **Install in Steam** opens Steam's install prompt for an uninstalled game.
+- **Open Faugus** brings up the Faugus window for Faugus entries.
+- **Manage in Steam** opens the Steam details page.
+- **Copy title** copies the game name.
+- **Favourite**, **Hide**, status (Backlog, Playing, Completed, Abandoned) and tags are stored
+  locally in the personal flags database.
+- ProtonDB links are shown for Steam games. PCGamingWiki works for every entry.
+- Steam achievement progress comes from the public Steam profile XML. Faugus entries do not
+  show achievements.
 
 ## Connections
 
-- Steam, IGDB, SteamDB/SteamGridDB, RetroAchievements, RomM.
-- Where credentials are stored.
-- Removing a connection.
+IGDB is optional. Add a Twitch developer client ID and secret in **Settings → Connections**
+to see critic scores and time-to-beat estimates. The client ID is stored in `settings.ini`;
+the secret is stored in the desktop Secret Service and is never written to the database or
+logs.
 
-## Privacy
-
-- Local-first behaviour.
-- Network features and what they send.
-- No telemetry.
-- Diagnostics.
+**Epic Games** is optional. Use **Sign in to Epic** in the same dialog. The Epic login page
+opens inside LGL; your Epic password never reaches the application. The session token is
+stored in the desktop Secret Service. Once connected, owned Epic games appear in the library,
+installed or not, with Epic cover art. Sign out to remove the token and the owned entries.
 
 ## Troubleshooting
 
-- A source is not detected.
-- A game will not launch.
-- Controller not detected.
-- Noctalia DND or Game Mode capability missing.
-- The guide overlay is unavailable.
-- Where the logs and database are.
-- How to reset without deleting the library.
+- **A source is not detected.** Start Steam or Faugus once, then use Refresh.
+- **A game will not launch.** Check that `steam` or `faugus-launcher` is on `PATH`; Flatpak
+  installs are launched through `flatpak run`.
+- **No cover art.** Steam covers fall back to the Steam CDN. Store games are matched to Steam by title and use Steam's
+  official store asset API, so their real cover and hero are used.
+- **IGDB shows an error.** Re-check the client ID and secret, or remove and re-add the
+  connection.
+- **Epic does not list games.** Sign in again from **Settings → Connections**; check that the
+  Secret Service is available.
+- **Achievements are unavailable.** The Steam profile must be public; private profiles
+  return no achievement data.
 
 ## Keyboard shortcuts
 
-(To be generated from the final shortcut table in `docs/05-UI-SPEC.md`.)
+| Shortcut | Action |
+|---|---|
+| `Ctrl+H` | Home: clear filters |
+| `Ctrl+Q` | Quit |
+| `Alt+Left` | Back |
+| `Alt+Right` | Forward |
 
 ## About
 
-- Version, licence, credits, project page, support.
-- Omakade attribution.
-- Console artwork attribution.
+LGL Games Launcher is GPL-3.0-or-later. It is an independent GTK port of
+[Omakade](https://github.com/btsouth/omakade) by Tyler South. The project page and issue
+tracker are at <https://github.com/linuxgamerlife/lgl-games-launcher>.
