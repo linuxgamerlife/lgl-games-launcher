@@ -13,10 +13,8 @@ licence notice:
 > GNU General Public License as published by the Free Software Foundation, either version 3 of
 > the License, or (at your option) any later version.
 
-The full GPL-3.0 text must be included in every source and binary distribution. In this
-design-only repository the canonical text is available at
-<https://www.gnu.org/licenses/gpl-3.0.txt>. Before the first release, add the full `LICENSE`
-file from the upstream Omakade tree and keep this notice.
+The full GPL-3.0 text is included in [`LICENSE`](LICENSE) at the root of this repository
+and must be included in every source and binary distribution. Keep this notice alongside it.
 
 ## Artwork
 

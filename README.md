@@ -40,7 +40,7 @@ Web API owned-library sync is added in a later release.
 - Mouse Back/Forward and `Alt+Left`/`Alt+Right` history navigation.
 - No account requirement for browsing, no telemetry and no background recording.
 
-The current package release is **0.0.1-1**.
+The current package release is **0.0.1-2**.
 
 ---
 
@@ -54,7 +54,7 @@ sudo dnf install lgl-games-launcher
 ```
 
 Launch **LGL Games Launcher** from the application menu. The current package release is
-**0.0.1-1**.
+**0.0.1-2**.
 
 ---
 
@@ -126,7 +126,8 @@ This is an independent GTK port of [Omakade](https://github.com/btsouth/omakade)
 
 ## License
 
-GPL-3.0-or-later. See [LICENCE.md](LICENCE.md). Omakade is Copyright (C) 2026 Tyler South.
+GPL-3.0-or-later. See [LICENCE.md](LICENCE.md) and the full [LICENSE](LICENSE). Omakade is
+Copyright (C) 2026 Tyler South.
 Console artwork retains its separate CC BY-SA attribution where present.
 
 ---

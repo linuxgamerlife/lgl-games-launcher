@@ -4,6 +4,13 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses semantic
 versioning once implementation starts.
 
+## [0.0.1-2] — 2026-11-09
+
+### Added
+
+- Full GPL-3.0 licence text in `LICENSE`, replacing the design-only placeholder notice.
+- `LICENSE` is installed as an RPM licence file alongside `LICENCE.md`.
+
 ## [0.0.1] — 2026-11-09
 
 ### Added

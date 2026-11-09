@@ -1,6 +1,6 @@
 Name:           lgl-games-launcher
 Version:        0.0.1
-Release:        1%{?dist}
+Release:        2%{?dist}
 Summary:        Steam library and launcher for Fedora
 
 License:        GPL-3.0-or-later
@@ -46,7 +46,7 @@ desktop-file-validate %{buildroot}%{_datadir}/applications/com.linuxgamerlife.%{
 appstreamcli validate --no-net %{buildroot}%{_datadir}/metainfo/com.linuxgamerlife.%{name}.metainfo.xml
 
 %files
-%license LICENCE.md
+%license LICENCE.md LICENSE
 %doc README.md CHANGELOG.md HELP.md
 %{_bindir}/%{name}
 %{_datadir}/applications/com.linuxgamerlife.%{name}.desktop
@@ -57,5 +57,8 @@ appstreamcli validate --no-net %{buildroot}%{_datadir}/metainfo/com.linuxgamerli
 %{_datadir}/icons/hicolor/256x256/apps/%{name}.png
 
 %changelog
+* Mon Nov 09 2026 LinuxGamerLife - 0.0.1-2
+- Ship the full GPL-3.0 licence text in LICENSE as an RPM licence file
+
 * Mon Nov 09 2026 LinuxGamerLife - 0.0.1-1
 - Initial Steam-only MVP: discovery, library browsing, details and launch
