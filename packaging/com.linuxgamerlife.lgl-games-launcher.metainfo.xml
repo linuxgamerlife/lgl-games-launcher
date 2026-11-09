@@ -27,6 +27,11 @@
   <url type="homepage">https://github.com/linuxgamerlife/lgl-games-launcher</url>
   <content_rating type="oars-1.1" />
   <releases>
+    <release version="0.3.1" date="2026-11-09">
+      <description>
+        <p>Trim the About dialog credits to the copyright holders required by the licence.</p>
+      </description>
+    </release>
     <release version="0.3.0" date="2026-11-09">
       <description>
         <p>Ubisoft Connect sign-in, owned library, covers and launching.</p>

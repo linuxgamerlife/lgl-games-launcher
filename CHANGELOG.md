@@ -4,6 +4,13 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses semantic
 versioning once implementation starts.
 
+## [0.3.1] — 2026-11-09
+
+### Changed
+
+- The About dialog credits only the copyright holders required by the licence
+  (LinuxGamerLife and Tyler South) instead of a contributor list.
+
 ## [0.3.0] — 2026-11-09
 
 ### Added

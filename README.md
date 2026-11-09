@@ -43,7 +43,7 @@ is Epic, which you enable explicitly. No telemetry and no background recording.
 - Mouse Back/Forward and `Alt+Left`/`Alt+Right` history navigation.
 - No account requirement for Steam/Faugus browsing, no telemetry and no background recording.
 
-The current package release is **0.3.0-1**.
+The current package release is **0.3.1-2**.
 
 ---
 
@@ -57,7 +57,7 @@ sudo dnf install lgl-games-launcher
 ```
 
 Launch **LGL Games Launcher** from the application menu. The current package release is
-**0.3.0-1**.
+**0.3.1-2**.
 
 ---
 

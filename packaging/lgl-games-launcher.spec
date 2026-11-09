@@ -1,6 +1,6 @@
 Name:           lgl-games-launcher
-Version:        0.3.0
-Release:        1%{?dist}
+Version:        0.3.1
+Release:        2%{?dist}
 Summary:        Steam and Faugus game library and launcher for Fedora
 
 License:        GPL-3.0-or-later
@@ -62,6 +62,9 @@ appstreamcli validate --no-net %{buildroot}%{_datadir}/metainfo/com.linuxgamerli
 %{_datadir}/icons/hicolor/256x256/apps/%{name}.png
 
 %changelog
+* Mon Nov 09 2026 LinuxGamerLife - 0.3.1-2
+- Reduce the About dialog credits to the copyright holders required by the licence
+
 * Mon Nov 09 2026 LinuxGamerLife - 0.3.0-1
 - Add optional Ubisoft Connect sign-in and owned-library sync
 - Add Ubisoft cover art and uplay:// launch/install handling

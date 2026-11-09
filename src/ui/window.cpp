@@ -1523,9 +1523,8 @@ void Window::show_about() {
     m_about->set_version(LGL_GAMES_LAUNCHER_VERSION);
     m_about->set_website("https://github.com/linuxgamerlife/lgl-games-launcher");
     m_about->set_website_label("Project page and issue tracker");
-    m_about->set_authors({"LinuxGamerLife", "Omakade contributors"});
-    m_about->set_comments(
-        "A local Steam and Faugus library for Fedora.\n\nInspired by Omakade by Tyler South.\nBuilt with GTK 4 and libadwaita.");
+    m_about->set_authors({"LinuxGamerLife", "Tyler South"});
+    m_about->set_comments("A local Steam and Faugus library for Fedora.");
     m_about->set_license_type(Gtk::License::GPL_3_0);
     m_about->set_logo_icon_name("lgl-games-launcher");
     m_about->set_transient_for(*this);
