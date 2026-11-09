@@ -20,7 +20,9 @@ struct EpicGame {
   std::string catalog_id;
   std::string title;
   std::string cover_url;
-  std::string cover_path;  // Filled by the caller after caching the image.
+  std::string hero_url;
+  std::string cover_path;
+  std::string hero_path;  // Filled by the caller after caching the image.
 };
 
 // Appends a non-secret diagnostic line to the Epic log.

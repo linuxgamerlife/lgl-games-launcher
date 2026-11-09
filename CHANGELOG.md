@@ -4,6 +4,19 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses semantic
 versioning once implementation starts.
 
+## [0.3.0] — 2026-11-09
+
+### Added
+
+- Optional Ubisoft Connect sign-in through Ubisoft's own login page.
+- Owned Ubisoft library, installed or not, cached locally for immediate display.
+- Ubisoft cover art from the owned-library response.
+- Ubisoft playtime and achievement progress (unlocked / total) from Ubisoft Connect's local
+  statistics cache, with a remote statscard fallback.
+- Ubisoft launches through `uplay://launch/<spaceId>/0`; uninstalled entries use the same
+  protocol so Ubisoft Connect opens its install prompt.
+- Ubisoft session storage in the desktop Secret Service.
+
 ## [0.2.0] — 2026-11-09
 
 ### Added

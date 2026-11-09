@@ -14,7 +14,8 @@
       games from its local library, presents them in a GTK library, and launches
       them through Steam or Faugus. Faugus entries include the Ubisoft Connect,
       EA App and Epic Games launchers it manages, plus the games those clients
-      installed. Optional Epic sign-in lists owned Epic games, installed or not.
+      installed. Optional Epic and Ubisoft Connect sign-in lists owned games,
+      installed or not.
     </p>
     <p>
       Everything is local. Other launchers, direct store account libraries,
@@ -26,6 +27,11 @@
   <url type="homepage">https://github.com/linuxgamerlife/lgl-games-launcher</url>
   <content_rating type="oars-1.1" />
   <releases>
+    <release version="0.3.0" date="2026-11-09">
+      <description>
+        <p>Ubisoft Connect sign-in, owned library, covers and launching.</p>
+      </description>
+    </release>
     <release version="0.2.0" date="2026-11-09">
       <description>
         <p>Faugus library discovery, store launchers and a source filter.</p>

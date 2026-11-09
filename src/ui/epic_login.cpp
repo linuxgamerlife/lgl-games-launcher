@@ -53,6 +53,7 @@ std::string authorization_code(const std::string& text) {
 
 EpicLoginDialog::EpicLoginDialog() {
   set_title("Sign in to Epic Games");
+  set_icon_name("lgl-games-launcher");
   set_default_size(480, 760);
   set_modal(true);
   m_view = WEBKIT_WEB_VIEW(webkit_web_view_new());

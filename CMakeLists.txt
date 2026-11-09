@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.20)
-project(lgl-games-launcher VERSION 0.2.0 LANGUAGES C CXX)
+project(lgl-games-launcher VERSION 0.3.0 LANGUAGES C CXX)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -33,6 +33,7 @@ pkg_check_modules(JSONGLIB REQUIRED IMPORTED_TARGET json-glib-1.0)
 pkg_check_modules(LIBSECRET REQUIRED IMPORTED_TARGET libsecret-1)
 pkg_check_modules(WEBKIT REQUIRED IMPORTED_TARGET webkitgtk-6.0)
 pkg_check_modules(LIBXML2 REQUIRED IMPORTED_TARGET libxml-2.0)
+pkg_check_modules(LIBARCHIVE REQUIRED IMPORTED_TARGET libarchive)
 find_package(SQLite3 REQUIRED)
 find_program(GLIB_COMPILE_RESOURCES glib-compile-resources REQUIRED)
 
@@ -63,10 +64,11 @@ add_library(lgl_launcher_core STATIC
   src/core/secret_store.cpp
   src/core/igdb.cpp
   src/core/epic.cpp
+  src/core/ubisoft.cpp
   src/core/steam_achievements.cpp
 )
 target_include_directories(lgl_launcher_core PUBLIC ${PROJECT_SOURCE_DIR}/src)
-target_link_libraries(lgl_launcher_core PUBLIC PkgConfig::GLIBMM PkgConfig::GIOMM PkgConfig::LIBSOUP PkgConfig::JSONGLIB PkgConfig::LIBSECRET PkgConfig::LIBXML2 SQLite3::SQLite3)
+target_link_libraries(lgl_launcher_core PUBLIC PkgConfig::GLIBMM PkgConfig::GIOMM PkgConfig::LIBSOUP PkgConfig::JSONGLIB PkgConfig::LIBSECRET PkgConfig::LIBXML2 PkgConfig::LIBARCHIVE SQLite3::SQLite3)
 
 add_executable(lgl-games-launcher
   ${RESOURCE_C}
@@ -76,6 +78,7 @@ add_executable(lgl-games-launcher
   src/ui/library_view.cpp
   src/ui/details_view.cpp
   src/ui/epic_login.cpp
+  src/ui/ubisoft_login.cpp
 )
 target_compile_definitions(lgl-games-launcher PRIVATE
   LGL_GAMES_LAUNCHER_VERSION="${PROJECT_VERSION}")

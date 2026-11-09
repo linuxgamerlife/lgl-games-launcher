@@ -1,6 +1,7 @@
 #pragma once
 
 #include "core/epic.h"
+#include "core/ubisoft.h"
 #include "core/flags_store.h"
 #include "core/igdb.h"
 #include "core/library.h"
@@ -39,6 +40,7 @@
 namespace gameslauncher {
 
 class EpicLoginDialog;
+class UbisoftLoginDialog;
 
 class Window final : public Gtk::ApplicationWindow {
 public:
@@ -72,6 +74,13 @@ private:
   void sign_out_epic();
   void update_epic_status();
   void merge_epic_games();
+  void start_ubisoft_worker();
+  void request_ubisoft_library();
+  void sign_in_ubisoft();
+  void sign_out_ubisoft();
+  void update_ubisoft_status();
+  void merge_ubisoft_games();
+  void rebuild_games();
   void toggle_favorite(const std::string& app_id, bool favorite);
   void toggle_hidden(const std::string& app_id, bool hidden);
   void set_tags(const std::string& app_id, const std::string& tags);
@@ -152,6 +161,27 @@ private:
   std::optional<EpicSession> m_epic_session;
   std::string m_epic_last_error;
   std::size_t m_epic_last_count = 0;
+  std::optional<UbisoftSession> m_ubisoft_session;
+  std::vector<UbisoftGame> m_ubisoft_games;
+  std::unique_ptr<UbisoftLoginDialog> m_ubisoft_login;
+  Gtk::Label* m_ubisoft_status = nullptr;
+  std::string m_ubisoft_last_error;
+  std::size_t m_ubisoft_last_count = 0;
+  std::jthread m_ubisoft_thread;
+  std::mutex m_ubisoft_mutex;
+  std::condition_variable_any m_ubisoft_cv;
+  struct UbisoftRequest {
+    UbisoftSession session;
+    std::string prefix;
+    bool pending = false;
+  };
+  UbisoftRequest m_ubisoft_request;
+  Glib::Dispatcher m_ubisoft_dispatcher;
+  sigc::connection m_ubisoft_connection;
+  std::mutex m_ubisoft_result_mutex;
+  std::vector<UbisoftGame> m_pending_ubisoft_games;
+  std::optional<UbisoftSession> m_pending_ubisoft_session;
+  std::string m_pending_ubisoft_error;
   std::vector<EpicGame> m_epic_games;
   std::unique_ptr<EpicLoginDialog> m_epic_login;
   Gtk::Label* m_epic_status = nullptr;

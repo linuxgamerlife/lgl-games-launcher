@@ -302,7 +302,17 @@ bool allowed_image_url(const std::string& url) {
                              "https://steamcommunity-a.akamaihd.net/",
                              "https://cdn1.epicgames.com/",
                              "https://cdn2.unrealengine.com/",
-                             "https://launcher-public-service-prod06.ol.epicgames.com/"}) {
+                             "https://launcher-public-service-prod06.ol.epicgames.com/",
+                             "https://ubistatic-a.akamaihd.net/",
+                             "https://ubistatic2-a.akamaihd.net/",
+                             "https://ubistatic3-a.akamaihd.net/",
+                             "https://ubistatic19-a.akamaihd.net/",
+                             "https://staticctf.ubisoft.com/",
+                             "https://cdn.ubisoft.com/",
+                             "https://static3.cdn.ubi.com/",
+                             "https://static2.cdn.ubi.com/",
+                             "https://ubiservices.cdn.ubi.com/",
+                             "https://ubistatic3-a.akamaihd.net/"}) {
     if (url.rfind(prefix, 0) == 0) {
       return true;
     }

@@ -77,6 +77,7 @@ private:
   Gtk::Overlay m_hero;
   Gtk::Picture m_hero_picture;
   Gtk::Box m_hero_shade;
+  Gtk::Box m_hero_left_shade;
   Gtk::Box m_hero_content;
   Gtk::Button m_back;
   Gtk::Box m_top;

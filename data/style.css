@@ -190,9 +190,14 @@ button.gl-small {
   background-image: linear-gradient(to bottom, transparent 0%, alpha(@window_bg_color, 0.35) 45%, @window_bg_color 95%);
 }
 
-.detail-hero-content {
-  color: @window_fg_color;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.85);
+.detail-hero-left-shade {
+  background-image: linear-gradient(to right, rgba(0, 0, 0, 0.68) 0%,
+                                    rgba(0, 0, 0, 0.38) 42%, transparent 72%);
+}
+
+.detail-hero-content .muted {
+  color: rgba(255, 255, 255, 0.92);
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.95);
 }
 
 .hero-back {
@@ -205,8 +210,8 @@ button.gl-small {
   font-size: 2.4em;
   font-weight: 700;
   letter-spacing: -0.02em;
-  color: @window_fg_color;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.85);
+  color: #ffffff;
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.95);
 }
 
 .source-label {
@@ -216,6 +221,11 @@ button.gl-small {
   letter-spacing: 0.14em;
   color: @gl_muted;
   text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
+}
+
+.detail-hero-content .source-label {
+  color: rgba(255, 255, 255, 0.95);
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.95);
 }
 
 .gl-badge {

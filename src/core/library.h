@@ -24,6 +24,12 @@ struct Game {
   std::string faugus_gameid;
   std::string store_launcher_gameid;
   std::string epic_app_name;
+  std::string ubisoft_space_id;
+  std::string ubisoft_game_id;
+  int achievements_unlocked = 0;
+  int achievements_total = 0;
+  bool stats_available = false;
+  bool achievements_known = false;
   std::string epic_namespace;
   std::string epic_catalog_id;
   std::string epic_launcher_path;

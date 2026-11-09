@@ -2,6 +2,7 @@
 
 #include <adwaita.h>
 #include <glibmm/miscutils.h>
+#include <gtk/gtk.h>
 #include <gtkmm/application.h>
 #include <gtkmm/window.h>
 
@@ -10,6 +11,10 @@
 int main(int argc, char* argv[]) {
   adw_init();
   Glib::set_application_name("LGL Games Launcher");
+  if (GdkDisplay* display = gdk_display_get_default()) {
+    gtk_icon_theme_add_resource_path(gtk_icon_theme_get_for_display(display),
+                                     "/com/linuxgamerlife/gameslauncher/icons");
+  }
   Gtk::Window::set_default_icon_name("lgl-games-launcher");
 
   auto application =

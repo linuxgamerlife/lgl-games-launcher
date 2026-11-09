@@ -312,13 +312,13 @@ bool token_request(const std::string& form, EpicSession* session, std::string* e
   return parse_session(response, session, error);
 }
 
-std::string cover_from_images(JsonObject* object) {
+std::string image_from_types(JsonObject* object,
+                             std::initializer_list<const char*> wanted_types) {
   if (object == nullptr || !json_object_has_member(object, "keyImages")) {
     return {};
   }
   JsonArray* images = json_object_get_array_member(object, "keyImages");
-  for (const char* wanted : {"DieselGameBoxTall", "OfferImageTall", "Thumbnail",
-                             "DieselGameBox"}) {
+  for (const char* wanted : wanted_types) {
     for (guint index = 0; images != nullptr && index < json_array_get_length(images);
          ++index) {
       JsonObject* image = json_array_get_object_element(images, index);
@@ -328,6 +328,16 @@ std::string cover_from_images(JsonObject* object) {
     }
   }
   return {};
+}
+
+std::string cover_from_images(JsonObject* object) {
+  return image_from_types(object, {"DieselGameBoxTall", "OfferImageTall", "Thumbnail",
+                                   "DieselGameBox"});
+}
+
+std::string hero_from_images(JsonObject* object) {
+  return image_from_types(object, {"DieselGameBox", "OfferImageWide", "Thumbnail",
+                                   "DieselGameBoxTall"});
 }
 
 bool has_category(JsonObject* object, const char* wanted) {
@@ -391,6 +401,7 @@ bool parse_catalog(const std::string& body, const std::string& catalog_id, EpicG
       game->namespace_id = json_string(item, "namespace");
       game->catalog_id = catalog_id;
       game->cover_url = cover_from_images(item);
+      game->hero_url = hero_from_images(item);
       ok = true;
     }
   }
@@ -617,7 +628,9 @@ void EpicClient::save_games_cache(const std::vector<EpicGame>& games) {
     json_object_set_string_member(object, "catalog_id", game.catalog_id.c_str());
     json_object_set_string_member(object, "title", game.title.c_str());
     json_object_set_string_member(object, "cover_url", game.cover_url.c_str());
+    json_object_set_string_member(object, "hero_url", game.hero_url.c_str());
     json_object_set_string_member(object, "cover_path", game.cover_path.c_str());
+    json_object_set_string_member(object, "hero_path", game.hero_path.c_str());
     json_array_add_object_element(array, object);
   }
   JsonNode* root = json_node_alloc();
@@ -666,7 +679,9 @@ std::vector<EpicGame> EpicClient::load_games_cache() {
     game.catalog_id = json_string(object, "catalog_id");
     game.title = json_string(object, "title");
     game.cover_url = json_string(object, "cover_url");
+    game.hero_url = json_string(object, "hero_url");
     game.cover_path = json_string(object, "cover_path");
+    game.hero_path = json_string(object, "hero_path");
     if (!game.app_name.empty() && !game.title.empty()) {
       games.push_back(std::move(game));
     }

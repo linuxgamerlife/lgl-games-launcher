@@ -37,12 +37,13 @@ is Epic, which you enable explicitly. No telemetry and no background recording.
 - Rich details page with ProtonDB (Steam) and PCGamingWiki links.
 - Optional IGDB insights: critic score, rushed, main + extras and completionist estimates.
 - Steam achievement progress and achievement list from the public Steam profile XML.
-- Optional Epic Games sign-in (OAuth in an embedded login) for owned games, installed or not.
+- Optional Epic Games and Ubisoft Connect sign-in in embedded logins for owned games,
+  installed or not.
 - Epic cover art from Epic's catalog, with cached images.
 - Mouse Back/Forward and `Alt+Left`/`Alt+Right` history navigation.
 - No account requirement for Steam/Faugus browsing, no telemetry and no background recording.
 
-The current package release is **0.2.0-1**.
+The current package release is **0.3.0-1**.
 
 ---
 
@@ -56,7 +57,7 @@ sudo dnf install lgl-games-launcher
 ```
 
 Launch **LGL Games Launcher** from the application menu. The current package release is
-**0.2.0-1**.
+**0.3.0-1**.
 
 ---
 
@@ -68,6 +69,7 @@ Launch **LGL Games Launcher** from the application menu. The current package rel
 | **Faugus discovery** | Reads `games.json` from the native or Flatpak Faugus data directory, including Ubisoft Connect, EA App and Epic Games entries, playtime and last-played dates |
 | **Store discovery** | Finds games installed by Ubisoft Connect, EA App and Epic Games inside each Faugus prefix, wherever the store placed them (Ubisoft `uplay_install.state`, Epic manifests, EA install directories and registry); store games launch directly through Faugus's Proton runner |
 | **Epic library** | Optional Epic sign-in through Epic's own login page; lists owned games, installed or not, with Epic catalog cover art; the last library is cached locally so it appears immediately while it refreshes; installed games show Play and uninstalled games show Install, both through the Epic client, with a Store Page fallback; session token in the Secret Service |
+| **Ubisoft library** | Optional Ubisoft Connect sign-in through Ubisoft's own login page; lists owned games, installed or not, with Ubisoft cover art; playtime and achievement progress (unlocked / total) from Ubisoft Connect's local cache; cached library; installed games launch through `uplay://launch/<id>/0`; session in the Secret Service |
 | **Library** | Responsive cover grid, title/recent/playtime sorting, search, source filter (All/Steam/Faugus/Epic/EA/Ubisoft) and installed-only filter |
 | **Organisation** | Favourites, hidden games with Show hidden, tags, Backlog/Playing/Completed/Abandoned |
 | **Home** | Clears search, Favourites, Installed only and Show hidden in one click (`Ctrl+H`) |
@@ -81,9 +83,8 @@ Launch **LGL Games Launcher** from the application menu. The current package rel
 ### Deliberately not included yet
 
 - Other launchers: Heroic, Lutris, GOG, Battle.net, Xodus Nexus, RomM.
-- Direct Ubisoft or EA account libraries. Only games installed locally by those clients are
-  shown; owned-but-uninstalled Ubisoft/EA games need each store's account API. Epic is
-  supported through sign-in.
+- Direct EA account library. Only games installed locally by EA App are shown; owned-but-
+  uninstalled EA games need EA's account API. Epic and Ubisoft are supported through sign-in.
 - Emulators and ROM folders.
 - Play-session recording, statistics or Discord presence.
 - Game Mode, controller navigation or the in-game guide overlay.
@@ -97,22 +98,22 @@ Launch **LGL Games Launcher** from the application menu. The current package rel
 LGL is local-first. Steam and Faugus are read-only: the launcher never writes to their
 directories, and it does not query the Steam Web API. No telemetry is collected.
 
-**Epic sign-in.** The login happens on Epic's own page in an embedded WebKit view. LGL never
-sees or stores your Epic password. After sign-in, only the authorization code is handled; it is
-exchanged directly with Epic's account service. The resulting access and refresh tokens are
-stored in the desktop Secret Service (libsecret) under the purpose `epic-session`, never in
-`settings.ini`, the SQLite database, the cache, logs or process arguments. The web view's
-cookies and site storage are cleared after sign-in, and **Sign out** removes the token and the
-cached Epic library.
+**Epic and Ubisoft sign-in.** Both logins happen on the store's own page in an embedded
+WebKit view. LGL never sees or stores your passwords. After sign-in, only the resulting session
+is handled. Epic's tokens and Ubisoft's ticket/remember-me token are stored in the desktop
+Secret Service (libsecret) under `epic-session` and `ubisoft-session`, never in `settings.ini`,
+the SQLite database, the cache, logs or process arguments. The web view's cookies and site
+storage are cleared after sign-in, and **Sign out** removes the token and the cached library.
 
-**Network use.** Epic account, entitlement, catalog and cover requests run only after you
-connect Epic. Steam store search and the Steam CDN are used for cover art. IGDB is used only if
-you add its connection. Nothing is sent anywhere else, and there is no telemetry.
+**Network use.** Epic and Ubisoft account/library requests and their cover images run only
+after you connect that store. Steam store search and the Steam CDN are used for cover art.
+IGDB is used only if you add its connection. Nothing is sent anywhere else, and there is no
+telemetry.
 
-**Logs and caches.** The optional Epic diagnostic log at
-`$XDG_CACHE_HOME/lgl-games-launcher/epic.log` contains state changes, HTTP status codes,
-counts and launch URIs — never tokens or passwords. The Epic library cache stores app ids,
-titles and cached cover paths only. Both are created with private permissions.
+**Logs and caches.** The optional Epic and Ubisoft diagnostic logs
+(`epic.log`, `ubisoft.log`) contain state changes, HTTP status codes, counts and launch URIs —
+never tokens or passwords. The library caches store app ids, titles and cached cover paths only.
+All are created with private permissions.
 
 **Launching.** LGL does not run a shell for Steam. Store and Epic launches pass a constructed,
 shell-quoted command to Faugus's own runner; titles and other user text are never interpolated

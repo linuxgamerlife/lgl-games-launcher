@@ -45,7 +45,8 @@ Use the mouse Back/Forward buttons or `Alt+Left`/`Alt+Right` to move through his
 - **Favourite**, **Hide**, status (Backlog, Playing, Completed, Abandoned) and tags are stored
   locally in the personal flags database.
 - ProtonDB links are shown for Steam games. PCGamingWiki works for every entry.
-- Steam achievement progress comes from the public Steam profile XML. Faugus entries do not
+- Steam achievement progress comes from the public Steam profile XML. Ubisoft games show
+  playtime and achievement progress (unlocked / total) from Ubisoft Connect's local cache. Faugus entries do not
   show achievements.
 
 ## Connections
@@ -55,12 +56,12 @@ to see critic scores and time-to-beat estimates. The client ID is stored in `set
 the secret is stored in the desktop Secret Service and is never written to the database or
 logs.
 
-**Epic Games** is optional. Use **Sign in to Epic** in the same dialog. The Epic login page
-opens inside LGL; your Epic password never reaches the application. The session token is
-stored in the desktop Secret Service. Once connected, owned Epic games appear in the library,
-installed or not, with Epic cover art. The last library is cached locally, so it appears
-immediately at startup while LGL refreshes it in the background. Sign out to remove the
-token, the cache and the owned entries.
+**Epic Games** and **Ubisoft Connect** are optional. Use their sign-in buttons in the same
+dialog. The store login page opens inside LGL; your password never reaches the application.
+The session is stored in the desktop Secret Service. Once connected, owned games appear in
+the library, installed or not, with cover art. The last library is cached locally, so it
+appears immediately at startup while LGL refreshes it in the background. Sign out to remove
+the session, the cache and the owned entries.
 
 ## Troubleshooting
 

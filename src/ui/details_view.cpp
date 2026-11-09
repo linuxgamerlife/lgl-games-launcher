@@ -86,6 +86,10 @@ void DetailsView::build_hero() {
   m_hero_shade.set_can_target(false);
   m_hero.add_overlay(m_hero_shade);
 
+  m_hero_left_shade.add_css_class("detail-hero-left-shade");
+  m_hero_left_shade.set_can_target(false);
+  m_hero.add_overlay(m_hero_left_shade);
+
   m_hero_content.set_orientation(Gtk::Orientation::VERTICAL);
   m_hero_content.set_spacing(16);
   m_hero_content.set_margin(24);
@@ -374,26 +378,39 @@ void DetailsView::set_game(const Game& game) {
   }
   m_pcgamingwiki.set_uri("https://www.pcgamingwiki.com/w/index.php?search=" +
                          escape_uri(game.title));
-  m_playtime_value.set_text(format_playtime(game.playtime_minutes));
+  if (is_store && game.source == "Ubisoft" && !game.stats_available) {
+    m_playtime_value.set_text("Not tracked by Ubisoft");
+  } else {
+    m_playtime_value.set_text(format_playtime(game.playtime_minutes));
+  }
   if (is_store) {
     m_play_button.set_label(game.installed ? "▶  PLAY" : "INSTALL");
-    m_manage_button.set_visible(!game.executable.empty());
+    m_manage_button.set_visible(!game.store_launcher_gameid.empty());
   } else {
     m_play_button.set_label(m_is_steam && !game.installed ? "INSTALL IN STEAM" : "▶  PLAY");
     m_manage_button.set_visible(true);
   }
+  const bool store_achievements =
+      is_store && game.source == "Ubisoft" &&
+      (game.achievements_known || game.achievements_total > 0);
   m_achievement_section.set_visible(m_is_steam);
   if (m_achievements_card != nullptr) {
-    m_achievements_card->set_visible(m_is_steam);
+    m_achievements_card->set_visible(m_is_steam || store_achievements);
+    if (store_achievements) {
+      m_achievements_card->set_tooltip_text(
+          "Ubisoft does not expose the per-achievement state to LGL. Playtime and counts "
+          "come from its local cache or statscard endpoint when available.");
+    }
   }
   if (m_completion_card != nullptr) {
-    m_completion_card->set_visible(m_is_steam);
+    m_completion_card->set_visible(
+        m_is_steam || (store_achievements && game.achievements_total > 0));
   }
-  m_manage_button.set_label(m_is_steam
-                                ? "MANAGE IN STEAM"
-                                : (is_store ? (game.store_uri.empty() ? "OPEN " + source
-                                                                      : "STORE PAGE")
-                                            : "OPEN FAUGUS"));
+  m_manage_button.set_label(
+      m_is_steam ? "MANAGE IN STEAM"
+                 : (is_store ? (game.store_uri.empty() ? "OPEN " + source
+                                                       : "OPEN IN " + source)
+                             : "OPEN FAUGUS"));
   update_flags(game.flags);
 
   update_artwork(game);
@@ -404,8 +421,26 @@ void DetailsView::set_game(const Game& game) {
   m_igdb_normal.set_text("—");
   m_igdb_complete.set_text("—");
   m_igdb_link.set_visible(false);
-  m_achievements_value.set_text("—");
-  m_completion_value.set_text("—");
+  if (store_achievements) {
+    if (game.achievements_total > 0) {
+      m_achievements_value.set_text(
+          (game.achievements_known ? std::to_string(game.achievements_unlocked) : "—") +
+          " / " + std::to_string(game.achievements_total));
+      m_completion_value.set_text(
+          game.achievements_known
+              ? std::to_string((game.achievements_unlocked * 100) /
+                               game.achievements_total) +
+                    "%"
+              : "—");
+    } else {
+      m_achievements_value.set_text(
+          game.achievements_known ? std::to_string(game.achievements_unlocked) : "—");
+      m_completion_value.set_text("—");
+    }
+  } else {
+    m_achievements_value.set_text("—");
+    m_completion_value.set_text("—");
+  }
   m_achievement_status.set_text("Steam achievements load when a game is opened.");
   m_achievement_count.set_text("");
   m_achievement_percent.set_text("");
