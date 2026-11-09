@@ -1,143 +1,158 @@
+<div align="center">
+
+<img src="packaging/icons/256x256.png" width="128" alt="LGL Games Launcher">
+
 # LGL Games Launcher
 
-**A native GTK 4 Steam library and launcher for Fedora, based on Omakade.**
+**Your Steam library in one clean GTK window for Fedora.**
 
-> **Status: Steam-only MVP implementation.** The first build covers Steam discovery, library
-> browsing/organisation, details and launching. Tracking, Game Mode, guide, highlights, saves,
-> backups and streaming are documented but not built. See
-> [`docs/22-STEAM-MVP.md`](docs/22-STEAM-MVP.md).
+[![License: GPL-3.0-or-later](https://img.shields.io/badge/License-GPL--3.0--or--later-8cd3cb.svg)](LICENCE.md)
+[![Fedora](https://img.shields.io/badge/Fedora-44-blue?logo=fedora&logoColor=white)](https://fedoraproject.org)
+[![GTK](https://img.shields.io/badge/GTK-4-blue?logo=gtk&logoColor=white)](https://www.gtk.org)
+[![C++](https://img.shields.io/badge/C++-20-blue?logo=cplusplus&logoColor=white)](https://isocpp.org)
 
-## What it is
+<p align="center">
+  <a href="https://ko-fi.com/G2G3V70LW">
+    <img src="https://storage.ko-fi.com/cdn/kofi6.png?v=6" height="36" alt="Support on Ko-fi" />
+  </a>
+</p>
+</div>
 
-LGL Games Launcher is a native GTK 4 game library for Fedora. The **current build is Steam-only**:
-it discovers installed and owned Steam games from local manifests and Steam cache data, shows them in a GTK library, provides
-search, sorting, favourites, hidden games, installed-only filtering, tags and a rich details page with ProtonDB,
-IGDB insights and Steam achievements, and launches games through Steam or Flatpak Steam. Missing portrait covers are fetched from Steam’s public CDN and cached
-locally.
+---
 
-The wider Omakade feature set (other launchers, emulators, tracking, Game Mode, guide,
-highlights, save protection, backups and streaming) remains documented but is **not built**.
+## Overview
 
-It is a Fedora-first application:
+A native GTK 4 launcher for the Steam games already on your machine. It reads Steam's local
+library data, shows installed and owned-but-uninstalled games together, and starts games
+through Steam or the Flatpak Steam client.
 
-- GTK 4 with gtkmm 4, following the [LGL GTK Desktop Application Standard](../docs/gtk-desktop-application-standard.md).
-- Wayland first. **KineticWE** (the KWin-based compositor) with the **Noctalia** shell is
-  the primary desktop and the platform that defines the feature set. Other Wayland
-  sessions are best-effort compatibility, not the design target.
-- RPM and COPR packaging, with an optional Flatpak considered later and explicitly not a
-  first-release target.
-- No root process, no privileged helper, no shell execution and no telemetry.
+This is the **Steam-only MVP**. It is deliberately **local-ownership-only**: it discovers
+what Steam has recorded locally and does not query the Steam Web API. Family-shared or
+account-only entries that Steam has not written locally will not appear until optional Steam
+Web API owned-library sync is added in a later release.
 
-## Lineage and licence
+- One library for installed and uninstalled owned Steam games.
+- Local artwork first, with a cached Steam CDN fallback for missing portrait covers.
+- Search, sort, favourites, hidden games, tags, installed-only filtering and a Home action.
+- Rich details page with ProtonDB and PCGamingWiki links.
+- Optional IGDB insights: critic score, rushed, main + extras and completionist estimates.
+- Steam achievement progress and achievement list from the public Steam profile XML.
+- Mouse Back/Forward and `Alt+Left`/`Alt+Right` history navigation.
+- No account requirement for browsing, no telemetry and no background recording.
 
-This project is an independent GTK port of [Omakade](https://github.com/btsouth/omakade)
-1.18.0 (GPL-3.0-or-later, Copyright (C) 2026 Tyler South). The Qt/QML implementation is
-kept only as historical reference under `legacy/qt/` once the port starts; it is never
-built, tested or packaged.
+The current package release is **0.0.1-1**.
 
-The port is distributed under **GPL-3.0-or-later**. Console artwork carries separate
-CC BY-SA 3.0 attribution and must keep its notice. See [LICENCE.md](LICENCE.md) and
-[`docs/15-MIGRATION.md`](docs/15-MIGRATION.md).
+---
 
-This is not an official Omakade release and is not affiliated with the Omakade maintainer.
+## Install
 
-## Feasibility verdict
+The Fedora package is built from this repository. Install the RPM once a release or COPR
+build is published:
 
-**Feasible, in stages, with a deliberately narrower first release.**
+```bash
+sudo dnf install ./lgl-games-launcher-0.0.1-1.fc44.x86_64.rpm
+```
 
-The library, discovery, launch, tracking, organisation, backup, save-protection, metadata
-and statistics features can be ported to gtkmm with no architectural blocker. The parts
-that cannot be ported literally are the Omarchy-specific theme, the Omarchy shell in-game
-guide, Hyprland window/workspace control and the assumption that `gpu-screen-recorder` is
-installed. KineticWE provides the KWin D-Bus, KGlobalAccel, output-management and ScreenCast
-surface needed to rebuild Game Mode and recording integrations, and Noctalia provides the
-notification/DND IPC and GTK theme generation the application consumes.
+Launch **LGL Games Launcher** from the application menu. A COPR repository will be added
+when the first public build is published.
 
-**The in-game guide is not available on the target.** KineticWE does not provide the
-`zwlr_layer_shell_v1` protocol to clients, so a GTK 4 layer-shell overlay cannot be placed over
-a fullscreen game. The guide was an Omarchy shell plugin upstream; it has no replacement on
-KineticWE until the compositor exposes a supported overlay mechanism. The project does not
-ship a fake or broken overlay.
+---
 
-The full application is large: about 76,000 lines of C++, 19,800 lines of QML and 31,600
-lines of tests in the upstream tree. A staged MVP is realistic; one-to-one parity is a
-multi-month project. See [`docs/01-FEASIBILITY.md`](docs/01-FEASIBILITY.md).
+## Features
 
-## Scope at a glance
+| Area | What it does |
+|---|---|
+| **Steam discovery** | Reads `libraryfolders.vdf`, installed `appmanifest_*.acf`, `localconfig.vdf`, the per-account library cache and `appinfo.vdf` for names and types |
+| **Library** | Responsive cover grid, title/recent/playtime sorting, search, source status and installed-only filter |
+| **Organisation** | Favourites, hidden games with Show hidden, tags, Backlog/Playing/Completed/Abandoned |
+| **Home** | Clears search, Favourites, Installed only and Show hidden in one click (`Ctrl+H`) |
+| **Details** | Hero artwork, portrait cover, install state, Play/Install in Steam, Manage in Steam, copy title, copy app ID, ProtonDB and PCGamingWiki links |
+| **IGDB** | Optional Twitch developer credentials; critic score and time-to-beat estimates, cached in memory for the session |
+| **Achievements** | Public Steam profile XML; progress bar, unlocked/locked rows, Steam achievement icons cached locally |
+| **Cover art** | Local Steam cache first, including hashed asset subdirectories, then the Steam CDN; clean NO ART placeholder |
+| **Navigation** | Mouse Back/Forward, `Alt+Left`/`Alt+Right`, library/details history |
+| **Desktop** | Standard LGL GTK header bar, system title bar mode, About, notices, single instance |
 
-| Tier | Meaning | Examples |
-| --- | --- | --- |
-| P0 (current build) | Steam-only MVP | Steam discovery, grid, search/filter/sort, favourites/hidden/tags, details, launch |
-| Deferred | Drafted, not built | Other launchers/emulators, tracking, Game Mode, guide, highlights, saves, backups, streaming |
+### Deliberately not included yet
 
-The detailed matrix is in [`docs/06-FEATURE-PARITY.md`](docs/06-FEATURE-PARITY.md).
+- Other launchers: Heroic, Lutris, GOG, Faugus, Battle.net, Xodus Nexus, RomM.
+- Emulators and ROM folders.
+- Play-session recording, statistics or Discord presence.
+- Game Mode, controller navigation or the in-game guide overlay.
+- Save protection, library backup/restore or highlights.
+- Steam Web API owned-library sync, IGDB installation, or any account login.
 
-## Non-negotiable rules
+---
 
-1. **Security is not flexible.** The other standards may be adapted where the toolkit
-   differs; the security requirements in [`docs/09-SECURITY.md`](docs/09-SECURITY.md) may not.
-2. The GUI never runs as root. If a future feature needs privilege, it must use a separate
-   allow-listed helper designed to the
-   [Privileged Operations Standard](../docs/privileged-operations-standard.md); the current
-   design needs no such helper.
-3. External programs are started with an argument vector, never a shell.
-4. Every file, archive, network response, IPC message, ROM header and launcher database is
-   untrusted input with explicit size and format limits.
-5. Secrets live in the Secret Service, never in the database, settings file or logs.
-6. Releases are built in CI, signed and published with checksums and an SBOM.
+## Local data
 
-## Read the plan
+| Data | Location |
+|---|---|
+| Settings | `$XDG_CONFIG_HOME/lgl-games-launcher/settings.ini` |
+| Personal flags database | `$XDG_DATA_HOME/lgl-games-launcher/library.sqlite3` |
+| Cover/achievement image cache | `$XDG_CACHE_HOME/lgl-games-launcher/` |
 
-Start with [`docs/README.md`](docs/README.md), which lists the documents in reading order.
+Steam directories are read-only. LGL Games Launcher never writes to Steam's files.
 
-Most useful first:
+Optional IGDB credentials use the desktop Secret Service for the client secret. The client
+ID is stored in `settings.ini`. No secret is written to the database, logs or argv.
 
-1. [`docs/01-FEASIBILITY.md`](docs/01-FEASIBILITY.md) — is it possible, and what changes?
-2. [`docs/02-SCOPE.md`](docs/02-SCOPE.md) — what the port will and will not do.
-3. [`docs/03-ARCHITECTURE.md`](docs/03-ARCHITECTURE.md) — how the GTK application is built.
-4. [`docs/06-FEATURE-PARITY.md`](docs/06-FEATURE-PARITY.md) — feature-by-feature disposition.
-5. [`docs/09-SECURITY.md`](docs/09-SECURITY.md) — threat model and secure design review.
-6. [`docs/07-IMPLEMENTATION-PLAN.md`](docs/07-IMPLEMENTATION-PLAN.md) — phases and order of work.
-7. [`docs/08-ROADMAP.md`](docs/08-ROADMAP.md) — milestones and release gates.
+---
 
-## Build and run
+## Build from source
 
-Build inside the Fedora development distrobox (`fedora-dev1`), not on the host:
+Build inside the Fedora development container, not against the host libraries:
 
 ```bash
 distrobox enter fedora-dev1 -- bash -lc '
   cd /run/host/development/projects/lgl-games-launcher
-  cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTING=OFF
+  cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=OFF
   cmake --build build -j"$(nproc)"
 '
 ```
 
-Run it in the real session:
+Run it:
 
 ```bash
 ./build/lgl-games-launcher
 ```
 
-It reads Steam manifests only. It does not write to Steam’s directories. User flags are stored
-in `$XDG_DATA_HOME/lgl-games-launcher/library.sqlite3`; settings in
-`$XDG_CONFIG_HOME/lgl-games-launcher/settings.ini`.
+Build dependencies:
 
-## Current state
+```bash
+sudo dnf install cmake gcc-c++ ninja-build pkgconf-pkg-config \
+  gtk4-devel gtkmm4.0-devel libadwaita-devel glib2-devel \
+  sqlite-devel libsoup3-devel json-glib-devel libsecret-devel libxml2-devel \
+  desktop-file-utils appstream
+```
 
-| Item | State |
-| --- | --- |
-| Feasibility study | Complete (2026-11-08) |
-| Product scope | Steam-only MVP approved |
-| Architecture | Broad design recorded; MVP implemented |
-| Security design review | Broad design recorded; MVP code follows it |
-| Implementation | Steam discovery, library, details and launch built |
-| Automated tests | Deferred; maintainer tests manually |
-| Target Fedora release | Fedora 44 and later |
-| Target desktop | KineticWE + Noctalia (Wayland) |
-| Upstream reference | Omakade 1.18.0 |
+Automated tests are deferred for this MVP. The code is built with warnings as errors and
+has been reviewed with clang-tidy, cppcheck and ASan/UBSan.
 
-## Next action
+---
 
-Run the MVP against a real Steam library, then decide the next slice: richer metadata,
-collections/saved filters, or launch setup. Tracking, Game Mode, guide, highlights, saves,
-backups and streaming are not part of this build.
+## Project layout
+
+```text
+src/core/     Steam discovery, settings, flags database, IGDB, achievements, launch
+src/ui/       GTK window, library grid, details page, theme watcher
+data/         stylesheet, app icon, NO ART placeholder, GResource manifest
+packaging/    RPM spec, desktop file, metainfo, icons
+```
+
+This is an independent GTK port of [Omakade](https://github.com/btsouth/omakade)
+1.18.0. The upstream Qt/QML implementation is reference only and is not built.
+
+---
+
+## License
+
+GPL-3.0-or-later. See [LICENCE.md](LICENCE.md). Omakade is Copyright (C) 2026 Tyler South.
+Console artwork retains its separate CC BY-SA attribution where present.
+
+---
+
+<div align="center">
+Made for <a href="https://fedoraproject.org">Fedora</a> · by
+<a href="https://www.youtube.com/@linuxgamerlife">LinuxGamerLife</a>
+</div>

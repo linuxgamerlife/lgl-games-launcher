@@ -442,6 +442,12 @@ std::map<std::string, std::string> appinfo_names(const std::string& root,
     return result;
   }
   const std::string& data = *contents;
+  if (data.size() < 8 || static_cast<unsigned char>(data[0]) != 0x29 ||
+      static_cast<unsigned char>(data[1]) != 0x44 ||
+      static_cast<unsigned char>(data[2]) != 0x56 ||
+      static_cast<unsigned char>(data[3]) != 0x07) {
+    return result;
+  }
   const std::string name_marker("\x01\x04\x00\x00\x00", 5);
   const std::string type_marker("\x01\x05\x00\x00\x00", 5);
   std::size_t pos = 0;

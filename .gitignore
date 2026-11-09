@@ -6,3 +6,4 @@ result/
 *.src.rpm
 compile_commands.json
 .cache/
+docs/

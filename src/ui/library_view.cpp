@@ -237,6 +237,13 @@ void LibraryView::update_game_flags(const std::string& app_id, const GameFlags& 
                            (!m_favorites_only || flags.favorite);
   if (was_visible != now_visible || m_favorites_only) {
     apply();
+  } else if (was_visible && previous.favorite != flags.favorite) {
+    for (guint index = 0; index < m_model->get_n_items(); ++index) {
+      if (m_model->get_string(index) == app_id) {
+        m_model->splice(index, 1, {app_id});
+        break;
+      }
+    }
   }
 }
 
@@ -280,8 +287,7 @@ void LibraryView::apply() {
   for (const Game& game : visible) {
     ids.emplace_back(game.steam.app_id);
   }
-  m_model = Gtk::StringList::create(ids);
-  m_selection->set_model(m_model);
+  m_model->splice(0, m_model->get_n_items(), ids);
   if (visible.empty()) {
     m_stack.set_visible_child(m_empty);
   } else {

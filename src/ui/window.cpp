@@ -159,6 +159,7 @@ Window::Window(const Glib::RefPtr<Gtk::Application>& application)
       },
       false);
 
+  start_metadata_workers();
   m_scan_idle = Glib::signal_idle().connect([this] {
     scan_and_load();
     return false;
@@ -170,10 +171,12 @@ Window::~Window() {
   m_notice_timeout.disconnect();
   if (m_igdb_thread.joinable()) {
     m_igdb_thread.request_stop();
+    m_igdb_cv.notify_all();
     m_igdb_thread.join();
   }
   if (m_achievements_thread.joinable()) {
     m_achievements_thread.request_stop();
+    m_achievements_cv.notify_all();
     m_achievements_thread.join();
   }
   for (std::jthread& thread : m_artwork_threads) {
@@ -544,22 +547,15 @@ void Window::load_igdb(const std::string& app_id) {
   if (app_id == m_details.current_app_id()) {
     m_details.set_igdb_loading();
   }
-  m_igdb_thread = std::jthread([this, app_id, title, client_id, secret](std::stop_token stop) {
-    IgdbClient client(client_id, secret);
-    IgdbInfo info;
-    std::string error;
-    if (!client.fetch(app_id, title, &info, &error)) {
-      info.error = error.empty() ? "IGDB data is unavailable." : error;
-    }
-    {
-      std::lock_guard lock(m_metadata_mutex);
-      m_pending_igdb_app = app_id;
-      m_pending_igdb = info;
-    }
-    if (!stop.stop_requested()) {
-      m_igdb_dispatcher.emit();
-    }
-  });
+  {
+    std::lock_guard lock(m_igdb_mutex);
+    m_igdb_request.app_id = app_id;
+    m_igdb_request.title = title;
+    m_igdb_request.client_id = client_id;
+    m_igdb_request.client_secret = secret;
+    m_igdb_request.pending = true;
+  }
+  m_igdb_cv.notify_one();
 }
 
 void Window::load_achievements(const std::string& app_id) {
@@ -578,18 +574,13 @@ void Window::load_achievements(const std::string& app_id) {
     m_details.set_achievements_loading();
   }
   const std::string steam_id = m_scan.steam_id;
-  m_achievements_thread = std::jthread(
-      [this, app_id, steam_id](std::stop_token stop) {
-        SteamAchievementsResult result = fetch_steam_achievements(steam_id, app_id);
-        {
-          std::lock_guard lock(m_metadata_mutex);
-          m_pending_achievements_app = app_id;
-          m_pending_achievements = result;
-        }
-        if (!stop.stop_requested()) {
-          m_achievements_dispatcher.emit();
-        }
-      });
+  {
+    std::lock_guard lock(m_achievements_mutex);
+    m_achievements_request.app_id = app_id;
+    m_achievements_request.steam_id = steam_id;
+    m_achievements_request.pending = true;
+  }
+  m_achievements_cv.notify_one();
 }
 
 void Window::show_connections() {
@@ -705,6 +696,57 @@ void Window::open_in_steam(const std::string& app_id) {
   if (!launch(command, &error)) {
     show_notice("Could not open Steam: " + error, true);
   }
+}
+
+void Window::start_metadata_workers() {
+  m_igdb_thread = std::jthread([this](std::stop_token stop) {
+    while (!stop.stop_requested()) {
+      IgdbRequest request;
+      {
+        std::unique_lock lock(m_igdb_mutex);
+        if (!m_igdb_cv.wait(lock, stop, [this] { return m_igdb_request.pending; })) {
+          return;
+        }
+        request = m_igdb_request;
+        m_igdb_request.pending = false;
+      }
+      IgdbClient client(request.client_id, request.client_secret);
+      IgdbInfo info;
+      std::string error;
+      if (!client.fetch(request.app_id, request.title, &info, &error)) {
+        info.error = error.empty() ? "IGDB data is unavailable." : error;
+      }
+      {
+        std::lock_guard lock(m_metadata_mutex);
+        m_pending_igdb_app = request.app_id;
+        m_pending_igdb = info;
+      }
+      m_igdb_dispatcher.emit();
+    }
+  });
+
+  m_achievements_thread = std::jthread([this](std::stop_token stop) {
+    while (!stop.stop_requested()) {
+      AchievementRequest request;
+      {
+        std::unique_lock lock(m_achievements_mutex);
+        if (!m_achievements_cv.wait(lock, stop,
+                                    [this] { return m_achievements_request.pending; })) {
+          return;
+        }
+        request = m_achievements_request;
+        m_achievements_request.pending = false;
+      }
+      SteamAchievementsResult result =
+          fetch_steam_achievements(request.steam_id, request.app_id);
+      {
+        std::lock_guard lock(m_metadata_mutex);
+        m_pending_achievements_app = request.app_id;
+        m_pending_achievements = result;
+      }
+      m_achievements_dispatcher.emit();
+    }
+  });
 }
 
 void Window::show_about() {

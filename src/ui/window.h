@@ -29,6 +29,7 @@
 #include <gtkmm/stack.h>
 
 #include <memory>
+#include <condition_variable>
 #include <mutex>
 #include <thread>
 #include <string>
@@ -61,6 +62,7 @@ private:
   void load_igdb(const std::string& app_id);
   void load_achievements(const std::string& app_id);
   void show_connections();
+  void start_metadata_workers();
   void toggle_favorite(const std::string& app_id, bool favorite);
   void toggle_hidden(const std::string& app_id, bool hidden);
   void set_tags(const std::string& app_id, const std::string& tags);
@@ -107,6 +109,24 @@ private:
   std::vector<std::jthread> m_artwork_threads;
   std::jthread m_igdb_thread;
   std::jthread m_achievements_thread;
+  std::mutex m_igdb_mutex;
+  std::condition_variable_any m_igdb_cv;
+  struct IgdbRequest {
+    std::string app_id;
+    std::string title;
+    std::string client_id;
+    std::string client_secret;
+    bool pending = false;
+  };
+  IgdbRequest m_igdb_request;
+  std::mutex m_achievements_mutex;
+  std::condition_variable_any m_achievements_cv;
+  struct AchievementRequest {
+    std::string app_id;
+    std::string steam_id;
+    bool pending = false;
+  };
+  AchievementRequest m_achievements_request;
   Glib::Dispatcher m_igdb_dispatcher;
   sigc::connection m_igdb_connection;
   Glib::Dispatcher m_achievements_dispatcher;
