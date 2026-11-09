@@ -344,12 +344,14 @@ void DetailsView::set_game(const Game& game) {
   m_app_id = game.steam.app_id;
   m_title.set_text(game.steam.name);
   m_source.set_text("STEAM");
-  m_installed.set_text(game.steam.installed ? "Installed locally through Steam."
-                                            : "Steam reports an incomplete install.");
+  m_installed.set_text(game.steam.installed
+                           ? "Installed locally through Steam."
+                           : "Not installed. Play opens Steam's install prompt.");
   m_protondb.set_uri("https://www.protondb.com/app/" + m_app_id);
   m_pcgamingwiki.set_uri("https://www.pcgamingwiki.com/w/index.php?search=" +
                          escape_uri(game.steam.name));
   m_playtime_value.set_text(format_playtime(game.steam.playtime_minutes));
+  m_play_button.set_label(game.steam.installed ? "▶  PLAY" : "INSTALL IN STEAM");
   update_flags(game.flags);
 
   update_artwork(game);

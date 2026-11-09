@@ -66,7 +66,9 @@ public:
     }
     m_title.set_text(game.steam.name);
     std::string meta = "Steam";
-    if (game.steam.playtime_minutes > 0) {
+    if (!game.steam.installed) {
+      meta += " · not installed";
+    } else if (game.steam.playtime_minutes > 0) {
       meta += " · " + format_playtime(game.steam.playtime_minutes);
     }
     m_meta.set_text(meta);

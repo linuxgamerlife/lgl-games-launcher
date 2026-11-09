@@ -7,6 +7,8 @@
 
 #include <algorithm>
 #include <cctype>
+#include <cstdint>
+#include <cstring>
 #include <filesystem>
 #include <fstream>
 #include <map>
@@ -22,10 +24,11 @@ namespace fs = std::filesystem;
 constexpr std::uintmax_t kMaxManifestBytes = 8 * 1024 * 1024;
 constexpr int kMaxManifests = 20000;
 
-std::optional<std::string> read_file(const fs::path& path, std::string* error) {
+std::optional<std::string> read_file(const fs::path& path, std::string* error,
+                                   std::uintmax_t max_bytes = kMaxManifestBytes) {
   std::error_code ec;
   const auto size = fs::file_size(path, ec);
-  if (ec || size > kMaxManifestBytes) {
+  if (ec || size > max_bytes) {
     if (error != nullptr) {
       *error = "file is missing or too large";
     }
@@ -235,6 +238,25 @@ std::string find_cache_file(const std::string& root, const std::string& app_id,
     if (!found.empty()) {
       return found;
     }
+    // STEAM_SERVICE_ASSETS: Steam stores many library assets one level down
+    // in an opaque hash directory (appid/<hash>/library_capsule.jpg).
+    std::error_code directory_error;
+    if (fs::is_directory(app_cache, directory_error)) {
+      int subdirectories = 0;
+      for (fs::directory_iterator child(
+               app_cache, fs::directory_options::skip_permission_denied, directory_error),
+           end;
+           child != end && !directory_error && subdirectories < 16;
+           child.increment(directory_error), ++subdirectories) {
+        if (!child->is_directory(directory_error)) {
+          continue;
+        }
+        const std::string nested = find_named(child->path(), {stem});
+        if (!nested.empty()) {
+          return nested;
+        }
+      }
+    }
     for (const char* extension : {".jpg", ".png", ".webp", ".jpeg"}) {
       const fs::path candidate = cache / (app_id + "_" + stem + extension);
       std::error_code ec;
@@ -297,6 +319,126 @@ std::string steam_id_for_root(const std::string& root) {
     }
   }
   return first;
+}
+
+std::set<std::string> owned_app_ids(const std::string& root, const std::string& steam_id) {
+  std::set<std::string> result;
+  std::error_code ec;
+  std::string user = steam_id;
+  const fs::path userdata = fs::path(root) / "userdata";
+  if (!user.empty() && !fs::is_directory(userdata / user, ec)) {
+    // loginusers.vdf exposes SteamID64, while userdata uses the account id.
+    user.clear();
+  }
+  if (user.empty() && fs::is_directory(userdata, ec)) {
+    for (fs::directory_iterator it(userdata, fs::directory_options::skip_permission_denied, ec), end;
+         it != end && !ec; it.increment(ec)) {
+      const std::string name = it->path().filename().string();
+      if (it->is_directory(ec) && !name.empty() &&
+          std::all_of(name.begin(), name.end(), [](unsigned char ch) {
+            return std::isdigit(ch) != 0;
+          })) {
+        user = name;
+        break;
+      }
+    }
+  }
+  if (user.empty()) {
+    return result;
+  }
+  const fs::path cache = userdata / user / "config" / "librarycache";
+  if (!fs::is_directory(cache, ec)) {
+    return result;
+  }
+  int inspected = 0;
+  for (fs::directory_iterator it(cache, fs::directory_options::skip_permission_denied, ec), end;
+       it != end && !ec && inspected < 10000; it.increment(ec), ++inspected) {
+    if (!it->is_regular_file(ec) || it->path().extension() != ".json") {
+      continue;
+    }
+    const std::string app_id = it->path().stem().string();
+    if (!app_id.empty() && app_id.size() <= 32 &&
+        std::all_of(app_id.begin(), app_id.end(), [](unsigned char ch) {
+          return std::isdigit(ch) != 0;
+        })) {
+      result.insert(app_id);
+    }
+  }
+  return result;
+}
+
+// appinfo.vdf is a binary record store. Its common fields use the key indexes
+// 4 (name) and 5 (type); the record's app id precedes the name field. This
+// reads those fields only, bounds every string, and ignores anything it
+// cannot associate with an owned app id.
+std::map<std::string, std::string> appinfo_names(const std::string& root,
+                                                 const std::set<std::string>& wanted) {
+  std::map<std::string, std::string> result;
+  if (wanted.empty()) {
+    return result;
+  }
+  std::string error;
+  const auto contents = read_file(fs::path(root) / "appcache" / "appinfo.vdf", &error,
+                                  64 * 1024 * 1024);
+  if (!contents) {
+    return result;
+  }
+  const std::string& data = *contents;
+  const std::string name_marker("\x01\x04\x00\x00\x00", 5);
+  const std::string type_marker("\x01\x05\x00\x00\x00", 5);
+  std::size_t pos = 0;
+  while ((pos = data.find(name_marker, pos)) != std::string::npos) {
+    const std::size_t name_start = pos + name_marker.size();
+    const void* null = std::memchr(data.data() + name_start, '\0', data.size() - name_start);
+    if (null == nullptr) {
+      break;
+    }
+    const std::size_t name_end = static_cast<const char*>(null) - data.data();
+    const std::size_t name_length = name_end - name_start;
+    if (name_length == 0 || name_length > 256) {
+      pos = name_start;
+      continue;
+    }
+    std::string app_id;
+    const std::size_t back_limit = pos > 192 ? pos - 192 : 0;
+    for (std::size_t back = back_limit; back + 4 <= pos; ++back) {
+      const auto value = static_cast<std::uint32_t>(
+          static_cast<unsigned char>(data[back]) |
+          (static_cast<std::uint32_t>(static_cast<unsigned char>(data[back + 1])) << 8) |
+          (static_cast<std::uint32_t>(static_cast<unsigned char>(data[back + 2])) << 16) |
+          (static_cast<std::uint32_t>(static_cast<unsigned char>(data[back + 3])) << 24));
+      const std::string candidate = std::to_string(value);
+      if (wanted.find(candidate) != wanted.end()) {
+        app_id = candidate;
+      }
+    }
+    if (!app_id.empty()) {
+      std::string type;
+      const std::size_t type_search_end = std::min(data.size(), name_end + 96);
+      const std::size_t type_pos = data.find(type_marker, name_end);
+      if (type_pos != std::string::npos && type_pos <= type_search_end) {
+        const std::size_t type_start = type_pos + type_marker.size();
+        const void* type_null = std::memchr(data.data() + type_start, '\0',
+                                            data.size() - type_start);
+        if (type_null != nullptr) {
+          const std::size_t type_end = static_cast<const char*>(type_null) - data.data();
+          if (type_end - type_start <= 64) {
+            type = data.substr(type_start, type_end - type_start);
+          }
+        }
+      }
+      const std::string candidate_name = data.substr(name_start, name_length);
+      const bool include = (type.empty() || type == "Game" || type == "Demo" ||
+                            type == "Beta" || type == "Playtest") &&
+                           candidate_name.find(" EULA") == std::string::npos &&
+                           result.find(app_id) == result.end();
+      if (include) {
+        result[app_id] = candidate_name;
+      }
+    }
+    pos = name_end;
+  }
+  return result;
 }
 
 std::map<std::string, int> playtime_for_root(const std::string& root) {
@@ -418,6 +560,35 @@ SteamScanResult SteamScanner::scan() {
         game.hero_path = find_hero(root, game.app_id);
         game.logo_path = find_logo(root, game.app_id);
         result.games.push_back(std::move(game));
+      }
+    }
+
+    const std::set<std::string> owned = owned_app_ids(root, result.steam_id);
+    if (!owned.empty()) {
+      const std::map<std::string, std::string> names = appinfo_names(root, owned);
+      for (const std::string& app_id : owned) {
+        if (seen_apps.find(app_id) != seen_apps.end()) {
+          continue;
+        }
+        const auto named = names.find(app_id);
+        if (named == names.end() || named->second.empty()) {
+          continue;
+        }
+        SteamGame game;
+        game.app_id = app_id;
+        game.name = named->second;
+        game.library_path = root;
+        game.installed = false;
+        const auto minutes = playtime.find(app_id);
+        if (minutes != playtime.end()) {
+          game.playtime_minutes = minutes->second;
+        }
+        game.cover_path = find_cover(root, app_id);
+        game.hero_path = find_hero(root, app_id);
+        game.logo_path = find_logo(root, app_id);
+        if (seen_apps.insert(app_id).second) {
+          result.games.push_back(std::move(game));
+        }
       }
     }
   }

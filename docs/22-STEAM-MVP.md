@@ -22,16 +22,20 @@ documented.
   - `~/.var/app/com.valvesoftware.Steam/.local/share/Steam`
   - `~/.var/app/com.valvesoftware.Steam/data/Steam`
 - Read `steamapps/libraryfolders.vdf` for additional libraries.
-- Read `steamapps/appmanifest_*.acf`.
-- Fields: app id, name, install dir, library path, manifest path, last played,
-  playtime minutes, size on disk.
-- Exclude Steam runtimes/tools and entries without an install directory.
-- Local artwork: `librarycache`, `appcache/librarycache`, `userdata/.../config/grid`.
+- Read `steamapps/appmanifest_*.acf` for installed games.
+- Read `userdata/<account>/config/librarycache/*.json` for owned games, and
+  `appcache/appinfo.vdf` for their names and types, so uninstalled owned games
+  appear too.
+- Fields: app id, name, install dir, library path, manifest path, installed state,
+  last played, playtime minutes, size on disk.
+- Exclude Steam runtimes/tools, DLC, soundtracks and entries without a usable name.
+- Local artwork: `librarycache`, recursive `appcache/librarycache/<appid>/<hash>/`
+  assets, and `userdata/.../config/grid`.
 - Missing portrait covers are fetched from Steam’s public CDN (`shared.steamstatic.com`) using only the numeric app id, then cached locally. No Steam Web API, no owned-library view, no metadata network calls.
 
 ### 1.2 Library and organisation
 
-- Responsive cover grid.
+- Responsive cover grid for installed and uninstalled owned games.
 - Search.
 - Sort: title, recently played, playtime.
 - Favourites.
@@ -57,7 +61,7 @@ documented.
 - Native Steam: `steam -applaunch <appid>`.
 - Flatpak Steam: `flatpak run com.valvesoftware.Steam -applaunch <appid>`.
 - No shell; argv only.
-- Launch failure notice.
+- Launch failure notice. Uninstalled games open Steam's install prompt.
 - Missing Steam or missing install path is an actionable error.
 - Single instance: a second launch presents the existing window.
 - `--play APPID` optional command line.

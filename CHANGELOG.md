@@ -12,7 +12,9 @@ versioning once implementation starts.
   - native and Flatpak Steam root discovery;
   - `libraryfolders.vdf` and `appmanifest_*.acf` parsing;
   - local playtime from `localconfig.vdf`;
-  - local Steam artwork, with a cached Steam CDN fallback for missing portraits;
+  - local Steam artwork, recursively including `appcache/librarycache/<appid>/<hash>/`
+    assets, with a cached Steam CDN fallback for missing portraits;
+  - installed and uninstalled owned Steam games, including names from `appinfo.vdf`;
   - responsive GTK library grid, search, sort, favourites, hidden games and tags;
   - rich details page with hero art, portrait cover, ProtonDB/PCGamingWiki links, install state,
     favourites, hidden, status and tags;
