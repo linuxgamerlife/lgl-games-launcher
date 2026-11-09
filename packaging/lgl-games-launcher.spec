@@ -42,8 +42,8 @@ client. This is the Steam-only MVP.
 %cmake_install
 
 %check
-desktop-file-validate %{buildroot}%{_datadir}/applications/%{name}.desktop
-appstreamcli validate --no-net %{buildroot}%{_datadir}/metainfo/%{name}.metainfo.xml
+desktop-file-validate %{buildroot}%{_datadir}/applications/com.linuxgamerlife.%{name}.desktop
+appstreamcli validate --no-net %{buildroot}%{_datadir}/metainfo/com.linuxgamerlife.%{name}.metainfo.xml
 
 %files
 %license LICENCE.md
