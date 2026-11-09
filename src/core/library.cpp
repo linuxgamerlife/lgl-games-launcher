@@ -104,6 +104,9 @@ std::vector<Game> load_games(const SteamScanResult& scan, const FaugusScanResult
     game.app_id = "store:" + entry.id;
     game.store_launcher_gameid = entry.launcher_gameid;
     game.epic_app_name = entry.app_name;
+    game.epic_namespace = entry.namespace_id;
+    game.epic_catalog_id = entry.catalog_id;
+    game.epic_launcher_path = entry.launcher_path;
     game.title = entry.title;
     game.source = entry.source;
     game.kind = GameKind::Store;

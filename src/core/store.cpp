@@ -316,6 +316,9 @@ std::vector<StoreGame> scan_epic(const FaugusGame& entry, const std::string& pre
       if (!game.title.empty() && (!location.empty() || !app_name.empty())) {
         game.id = "epic:" + (app_name.empty() ? slug(game.title) : app_name);
         game.app_name = app_name;
+        game.namespace_id = json_string(object, "CatalogNamespace");
+        game.catalog_id = json_string(object, "CatalogItemId");
+        game.launcher_path = entry.path;
         game.install_dir = StoreScanner::windows_to_unix(prefix, location);
         if (!executable.empty()) {
           const bool windows_absolute =
@@ -362,6 +365,7 @@ std::vector<StoreGame> scan_epic(const FaugusGame& entry, const std::string& pre
           game.title = !location.empty() ? fs::path(location).filename().string() : app_name;
           game.id = "epic:" + app_name;
           game.app_name = app_name;
+          game.launcher_path = entry.path;
           game.install_dir = StoreScanner::windows_to_unix(prefix, location);
           game.executable = largest_executable(game.install_dir);
           game.runner = entry.runner;

@@ -19,6 +19,10 @@ versioning once implementation starts.
   client when no executable is known.
 - Optional Epic Games sign-in with an embedded login window, owned-library sync, real Epic
   catalog cover art, and session storage in the Secret Service.
+- Epic games launch through the Epic client URI, so Epic handles ownership and DRM.
+- Epic owned games show **Install** instead of **Play** until they are installed; Install
+  sends Epic's install action, with a Store Page button as a fallback.
+- The Epic library is cached locally and shown immediately at startup while it refreshes.
 - Faugus playtime, last-played dates, covers and icons.
 - Faugus launch through `faugus-launcher --game <id>`, with a Flatpak fallback.
 - Open Faugus action on Faugus details pages.

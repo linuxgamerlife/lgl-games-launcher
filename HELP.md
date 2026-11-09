@@ -33,8 +33,11 @@ Use the mouse Back/Forward buttons or `Alt+Left`/`Alt+Right` to move through his
 
 ## Game details
 
-- **Play** starts the game through Steam or Faugus. Store games start directly through
-  Faugus's Proton runner; if the executable is unknown, Play opens the store client instead.
+- **Play** starts the game through Steam or Faugus. Ubisoft/EA games start through
+  Faugus's Proton runner. Epic games start through the Epic client, so ownership and DRM are
+  handled by Epic. Installed Epic games show **Play**; owned-but-uninstalled games show
+  **Install**, which asks Epic to install the game. **Store Page** opens the game's Epic product
+  page if Epic does not accept the install request.
 - **Install in Steam** opens Steam's install prompt for an uninstalled game.
 - **Open Faugus** brings up the Faugus window for Faugus entries.
 - **Manage in Steam** opens the Steam details page.
@@ -55,7 +58,9 @@ logs.
 **Epic Games** is optional. Use **Sign in to Epic** in the same dialog. The Epic login page
 opens inside LGL; your Epic password never reaches the application. The session token is
 stored in the desktop Secret Service. Once connected, owned Epic games appear in the library,
-installed or not, with Epic cover art. Sign out to remove the token and the owned entries.
+installed or not, with Epic cover art. The last library is cached locally, so it appears
+immediately at startup while LGL refreshes it in the background. Sign out to remove the
+token, the cache and the owned entries.
 
 ## Troubleshooting
 

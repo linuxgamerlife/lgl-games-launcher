@@ -13,7 +13,9 @@
 #include <algorithm>
 #include <cctype>
 #include <cstdio>
+#include <map>
 #include <mutex>
+#include <sys/stat.h>
 #include <utility>
 
 namespace gameslauncher {
@@ -23,9 +25,62 @@ void epic_log(const std::string& message) {
   g_mkdir_with_parents(cache_dir().c_str(), 0700);
   FILE* file = g_fopen(path.c_str(), "a");
   if (file != nullptr) {
+    g_chmod(path.c_str(), 0600);
     std::fprintf(file, "%s\n", message.c_str());
     std::fclose(file);
   }
+}
+
+namespace {
+
+std::string epic_app_uri(const std::string& namespace_id, const std::string& catalog_id,
+                         const std::string& app_name, const std::string& action) {
+  if (namespace_id.empty() || app_name.empty()) {
+    return {};
+  }
+  const std::string middle = catalog_id.empty() ? app_name : catalog_id;
+  const std::string joined = namespace_id + ":" + middle + ":" + app_name;
+  gchar* escaped = g_uri_escape_string(joined.c_str(), nullptr, true);
+  std::string result =
+      "com.epicgames.launcher://apps/" + std::string(escaped != nullptr ? escaped : "") +
+      "?action=" + action;
+  g_free(escaped);
+  return result;
+}
+
+} // namespace
+
+std::string epic_launch_uri(const std::string& namespace_id,
+                            const std::string& catalog_id,
+                            const std::string& app_name) {
+  return epic_app_uri(namespace_id, catalog_id, app_name, "launch&silent=true");
+}
+
+std::string epic_install_uri(const std::string& namespace_id,
+                             const std::string& catalog_id,
+                             const std::string& app_name) {
+  return epic_app_uri(namespace_id, catalog_id, app_name, "install");
+}
+
+std::string epic_store_uri(const std::string& title) {
+  std::string slug;
+  bool previous_dash = false;
+  for (unsigned char ch : title) {
+    if (std::isalnum(ch) != 0) {
+      slug.push_back(static_cast<char>(std::tolower(ch)));
+      previous_dash = false;
+    } else if (!slug.empty() && !previous_dash) {
+      slug.push_back('-');
+      previous_dash = true;
+    }
+  }
+  while (!slug.empty() && slug.back() == '-') {
+    slug.pop_back();
+  }
+  if (slug.empty()) {
+    return {};
+  }
+  return "com.epicgames.launcher://store/product/" + slug;
 }
 
 namespace {
@@ -448,7 +503,9 @@ bool EpicClient::fetch_owned_games(const EpicSession& session,
 
   // The launcher assets endpoint is a second source of owned, launchable
   // games. Some accounts return an empty entitlements list but still have
-  // assets, so merge both before resolving catalog metadata.
+  // assets, so merge both before resolving catalog metadata. It also gives the
+  // authoritative artifact app name used in Epic launch/install URIs.
+  std::map<std::pair<std::string, std::string>, std::string> asset_apps;
   {
     guint status = 0;
     std::string response;
@@ -475,6 +532,10 @@ bool EpicClient::fetch_owned_games(const EpicSession& session,
           const std::string namespace_id = json_string(asset, "namespace");
           if (!catalog.empty() && !namespace_id.empty()) {
             items.emplace_back(namespace_id, catalog);
+            const std::string app_name = json_string(asset, "appName");
+            if (!app_name.empty()) {
+              asset_apps[{namespace_id, catalog}] = app_name;
+            }
           }
         }
         epic_log("assets: HTTP 200, entries " +
@@ -524,6 +585,14 @@ bool EpicClient::fetch_owned_games(const EpicSession& session,
       if (game.namespace_id.empty()) {
         game.namespace_id = namespace_id;
       }
+      const auto asset = asset_apps.find({namespace_id, catalog_id});
+      if (asset != asset_apps.end()) {
+        game.app_name = asset->second;
+      }
+      if (games->size() < 5) {
+        epic_log("owned: " + game.title + " ns=" + game.namespace_id + " catalog=" +
+                 game.catalog_id + " app=" + game.app_name);
+      }
       games->push_back(std::move(game));
     } else {
       ++catalog_skipped;
@@ -534,6 +603,81 @@ bool EpicClient::fetch_owned_games(const EpicSession& session,
            std::to_string(catalog_skipped) + ", failures " +
            std::to_string(catalog_failures));
   return true;
+}
+
+void EpicClient::save_games_cache(const std::vector<EpicGame>& games) {
+  if (games.empty()) {
+    return;
+  }
+  JsonArray* array = json_array_new();
+  for (const EpicGame& game : games) {
+    JsonObject* object = json_object_new();
+    json_object_set_string_member(object, "app_name", game.app_name.c_str());
+    json_object_set_string_member(object, "namespace_id", game.namespace_id.c_str());
+    json_object_set_string_member(object, "catalog_id", game.catalog_id.c_str());
+    json_object_set_string_member(object, "title", game.title.c_str());
+    json_object_set_string_member(object, "cover_url", game.cover_url.c_str());
+    json_object_set_string_member(object, "cover_path", game.cover_path.c_str());
+    json_array_add_object_element(array, object);
+  }
+  JsonNode* root = json_node_alloc();
+  json_node_init_array(root, array);
+  JsonGenerator* generator = json_generator_new();
+  json_generator_set_root(generator, root);
+  gchar* data = json_generator_to_data(generator, nullptr);
+  if (data != nullptr) {
+    const std::string path = Glib::build_filename(cache_dir(), "epic-library.json");
+    const std::string temporary = path + ".tmp";
+    GError* error = nullptr;
+    g_mkdir_with_parents(cache_dir().c_str(), 0700);
+    if (g_file_set_contents(temporary.c_str(), data, -1, &error)) {
+      ::chmod(temporary.c_str(), 0600);
+      if (g_rename(temporary.c_str(), path.c_str()) != 0) {
+        g_unlink(temporary.c_str());
+      }
+    } else if (error != nullptr) {
+      g_error_free(error);
+    }
+    g_free(data);
+  }
+  g_object_unref(generator);
+  json_node_free(root);
+}
+
+std::vector<EpicGame> EpicClient::load_games_cache() {
+  std::vector<EpicGame> games;
+  const std::string path = Glib::build_filename(cache_dir(), "epic-library.json");
+  JsonParser* parser = json_parser_new();
+  if (!json_parser_load_from_file(parser, path.c_str(), nullptr)) {
+    g_object_unref(parser);
+    return games;
+  }
+  JsonNode* root = json_parser_get_root(parser);
+  JsonArray* array =
+      (root != nullptr && JSON_NODE_HOLDS_ARRAY(root)) ? json_node_get_array(root) : nullptr;
+  for (guint index = 0; array != nullptr && index < json_array_get_length(array); ++index) {
+    JsonObject* object = json_array_get_object_element(array, index);
+    if (object == nullptr) {
+      continue;
+    }
+    EpicGame game;
+    game.app_name = json_string(object, "app_name");
+    game.namespace_id = json_string(object, "namespace_id");
+    game.catalog_id = json_string(object, "catalog_id");
+    game.title = json_string(object, "title");
+    game.cover_url = json_string(object, "cover_url");
+    game.cover_path = json_string(object, "cover_path");
+    if (!game.app_name.empty() && !game.title.empty()) {
+      games.push_back(std::move(game));
+    }
+  }
+  g_object_unref(parser);
+  return games;
+}
+
+void EpicClient::clear_games_cache() {
+  const std::string path = Glib::build_filename(cache_dir(), "epic-library.json");
+  g_unlink(path.c_str());
 }
 
 bool EpicClient::save_session(const EpicSession& session) {

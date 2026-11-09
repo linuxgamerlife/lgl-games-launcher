@@ -24,6 +24,12 @@ struct Game {
   std::string faugus_gameid;
   std::string store_launcher_gameid;
   std::string epic_app_name;
+  std::string epic_namespace;
+  std::string epic_catalog_id;
+  std::string epic_launcher_path;
+  std::string launch_uri;
+  std::string install_uri;
+  std::string store_uri;
   std::string title;
   std::string source;        // Display label: Steam, Faugus, Epic, EA, Ubisoft.
   GameKind kind = GameKind::Steam;

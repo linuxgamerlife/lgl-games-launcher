@@ -26,6 +26,15 @@ struct EpicGame {
 // Appends a non-secret diagnostic line to the Epic log.
 void epic_log(const std::string& message);
 
+// Epic launcher URI that starts an installed game through the Epic client.
+[[nodiscard]] std::string epic_launch_uri(const std::string& namespace_id,
+                                          const std::string& catalog_id,
+                                          const std::string& app_name);
+[[nodiscard]] std::string epic_install_uri(const std::string& namespace_id,
+                                           const std::string& catalog_id,
+                                           const std::string& app_name);
+[[nodiscard]] std::string epic_store_uri(const std::string& title);
+
 // Epic Games Store OAuth and owned-library client. Tokens are held in memory
 // and persisted by the caller in the desktop Secret Service.
 class EpicClient {
@@ -45,6 +54,12 @@ public:
   [[nodiscard]] static bool fetch_owned_games(const EpicSession& session,
                                               std::vector<EpicGame>* games,
                                               std::string* error);
+
+  // Local, non-secret cache of the last owned library, shown before the
+  // network refresh finishes.
+  static void save_games_cache(const std::vector<EpicGame>& games);
+  [[nodiscard]] static std::vector<EpicGame> load_games_cache();
+  static void clear_games_cache();
 
   [[nodiscard]] static bool save_session(const EpicSession& session);
   [[nodiscard]] static std::optional<EpicSession> load_session();

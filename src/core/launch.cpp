@@ -6,6 +6,8 @@
 
 #include <algorithm>
 #include <cctype>
+#include <cstdint>
+#include <cstdio>
 #include <filesystem>
 #include <sstream>
 
@@ -23,6 +25,20 @@ std::string shell_quote(const std::string& value) {
   }
   result.push_back('\'');
   return result;
+}
+
+std::string umu_game_id(const std::string& gameid) {
+  std::uint32_t crc = 0xFFFFFFFFu;
+  for (unsigned char ch : gameid) {
+    crc ^= ch;
+    for (int bit = 0; bit < 8; ++bit) {
+      crc = (crc >> 1) ^ (0xEDB88320u & (0u - (crc & 1u)));
+    }
+  }
+  crc ^= 0xFFFFFFFFu;
+  char buffer[32]{};
+  std::snprintf(buffer, sizeof(buffer), "umu-faugus%08x", crc);
+  return buffer;
 }
 
 bool env_name(const std::string& value) {
@@ -91,6 +107,10 @@ LaunchCommand store_launch_command(const Game& game) {
 
   std::vector<std::string> parts;
   parts.push_back("WINEPREFIX=" + shell_quote(game.library_path));
+  if (!game.store_launcher_gameid.empty() &&
+      game.launch_arguments.find("GAMEID=") == std::string::npos) {
+    parts.push_back("GAMEID=" + umu_game_id(game.store_launcher_gameid));
+  }
   const std::string proton = proton_path_for(game.runner);
   if (!proton.empty()) {
     parts.push_back("PROTONPATH=" + shell_quote(proton));
@@ -111,6 +131,9 @@ LaunchCommand store_launch_command(const Game& game) {
   }
   parts.push_back(shell_quote(umu));
   parts.push_back(shell_quote(game.executable));
+  if (!game.launch_uri.empty()) {
+    parts.push_back(shell_quote(game.launch_uri));
+  }
 
   std::string joined;
   for (const std::string& part : parts) {

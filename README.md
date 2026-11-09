@@ -67,7 +67,7 @@ Launch **LGL Games Launcher** from the application menu. The current package rel
 | **Steam discovery** | Reads `libraryfolders.vdf`, installed `appmanifest_*.acf`, `localconfig.vdf`, the per-account library cache and `appinfo.vdf` for names and types |
 | **Faugus discovery** | Reads `games.json` from the native or Flatpak Faugus data directory, including Ubisoft Connect, EA App and Epic Games entries, playtime and last-played dates |
 | **Store discovery** | Finds games installed by Ubisoft Connect, EA App and Epic Games inside each Faugus prefix, wherever the store placed them (Ubisoft `uplay_install.state`, Epic manifests, EA install directories and registry); store games launch directly through Faugus's Proton runner |
-| **Epic library** | Optional Epic sign-in through Epic's own login page; lists owned games, installed or not, with Epic catalog cover art; session token in the Secret Service |
+| **Epic library** | Optional Epic sign-in through Epic's own login page; lists owned games, installed or not, with Epic catalog cover art; the last library is cached locally so it appears immediately while it refreshes; installed games show Play and uninstalled games show Install, both through the Epic client, with a Store Page fallback; session token in the Secret Service |
 | **Library** | Responsive cover grid, title/recent/playtime sorting, search, source filter (All/Steam/Faugus/Epic/EA/Ubisoft) and installed-only filter |
 | **Organisation** | Favourites, hidden games with Show hidden, tags, Backlog/Playing/Completed/Abandoned |
 | **Home** | Clears search, Favourites, Installed only and Show hidden in one click (`Ctrl+H`) |
@@ -88,7 +88,35 @@ Launch **LGL Games Launcher** from the application menu. The current package rel
 - Play-session recording, statistics or Discord presence.
 - Game Mode, controller navigation or the in-game guide overlay.
 - Save protection, library backup/restore or highlights.
-- Steam Web API owned-library sync, IGDB installation, or any account login.
+- Steam Web API owned-library sync, IGDB installation, or Ubisoft/EA account logins.
+
+---
+
+## Security and privacy
+
+LGL is local-first. Steam and Faugus are read-only: the launcher never writes to their
+directories, and it does not query the Steam Web API. No telemetry is collected.
+
+**Epic sign-in.** The login happens on Epic's own page in an embedded WebKit view. LGL never
+sees or stores your Epic password. After sign-in, only the authorization code is handled; it is
+exchanged directly with Epic's account service. The resulting access and refresh tokens are
+stored in the desktop Secret Service (libsecret) under the purpose `epic-session`, never in
+`settings.ini`, the SQLite database, the cache, logs or process arguments. The web view's
+cookies and site storage are cleared after sign-in, and **Sign out** removes the token and the
+cached Epic library.
+
+**Network use.** Epic account, entitlement, catalog and cover requests run only after you
+connect Epic. Steam store search and the Steam CDN are used for cover art. IGDB is used only if
+you add its connection. Nothing is sent anywhere else, and there is no telemetry.
+
+**Logs and caches.** The optional Epic diagnostic log at
+`$XDG_CACHE_HOME/lgl-games-launcher/epic.log` contains state changes, HTTP status codes,
+counts and launch URIs — never tokens or passwords. The Epic library cache stores app ids,
+titles and cached cover paths only. Both are created with private permissions.
+
+**Launching.** LGL does not run a shell for Steam. Store and Epic launches pass a constructed,
+shell-quoted command to Faugus's own runner; titles and other user text are never interpolated
+into it. Game ids and paths come from local store data.
 
 ---
 

@@ -83,6 +83,7 @@ Window::Window(const Glib::RefPtr<Gtk::Application>& application)
       (void)EpicClient::save_session(*session);
     }
     m_epic_games = std::move(games);
+    EpicClient::save_games_cache(m_epic_games);
     merge_epic_games();
     update_epic_status();
     if (m_epic_games.empty()) {
@@ -201,6 +202,7 @@ Window::Window(const Glib::RefPtr<Gtk::Application>& application)
   start_epic_worker();
   m_epic_session = EpicClient::load_session();
   if (m_epic_session.has_value()) {
+    m_epic_games = EpicClient::load_games_cache();
     request_epic_library();
   }
   m_scan_idle = Glib::signal_idle().connect([this] {
@@ -514,7 +516,18 @@ void Window::play(const std::string& app_id) {
     return;
   }
   if (game->kind == GameKind::Store) {
-    LaunchCommand direct = store_launch_command(*game);
+    Game launch_game = *game;
+    if (!game->installed && !game->install_uri.empty()) {
+      launch_game.launch_uri = game->install_uri;
+    }
+    LaunchCommand direct = store_launch_command(launch_game);
+    epic_log("play: " + game->title + " installed=" +
+             (game->installed ? "true" : "false") + " uri=" + launch_game.launch_uri +
+             " exe=" + launch_game.executable);
+    epic_log("play: program=" + direct.program);
+    for (const std::string& argument : direct.arguments) {
+      epic_log("play: arg=" + argument);
+    }
     std::string error;
     if (direct.program.empty()) {
       const LaunchCommand client = faugus_launch_command_for(game->store_launcher_gameid);
@@ -530,7 +543,11 @@ void Window::play(const std::string& app_id) {
       show_notice(error, true);
       return;
     }
-    show_notice("Launching " + game->title + "…");
+    if (!game->installed && !game->install_uri.empty()) {
+      show_notice("Opening " + game->source + " to install " + game->title + "…");
+    } else {
+      show_notice("Launching " + game->title + "…");
+    }
     return;
   }
 
@@ -831,7 +848,11 @@ void Window::open_in_steam(const std::string& app_id) {
   }
   LaunchCommand command;
   if (!game->is_steam()) {
-    if (game->kind == GameKind::Store) {
+    if (game->kind == GameKind::Store && !game->store_uri.empty()) {
+      Game store = *game;
+      store.launch_uri = game->store_uri;
+      command = store_launch_command(store);
+    } else if (game->kind == GameKind::Store) {
       command = faugus_launch_command_for(game->store_launcher_gameid);
     } else if (!Glib::find_program_in_path("faugus-launcher").empty()) {
       command.program = "faugus-launcher";
@@ -993,6 +1014,7 @@ void Window::sign_out_epic() {
   EpicClient::clear_session();
   m_epic_session.reset();
   m_epic_games.clear();
+  EpicClient::clear_games_cache();
   merge_epic_games();
   update_epic_status();
   show_notice("Signed out of Epic Games.");
@@ -1020,6 +1042,13 @@ void Window::update_epic_status() {
 
 void Window::merge_epic_games() {
   m_games = load_games(m_scan, m_faugus_scan, m_store_scan, m_flags);
+  const FaugusGame* epic_entry = nullptr;
+  for (const FaugusGame& entry : m_faugus_scan.games) {
+    if (entry.gameid == "epic-games") {
+      epic_entry = &entry;
+      break;
+    }
+  }
   for (const EpicGame& owned : m_epic_games) {
     const std::string normalized = normalise_title(owned.title);
     auto found = std::find_if(
@@ -1030,6 +1059,11 @@ void Window::merge_epic_games() {
         });
     if (found != m_games.end()) {
       found->epic_app_name = owned.app_name;
+      found->epic_namespace = owned.namespace_id;
+      found->epic_catalog_id = owned.catalog_id;
+      if (epic_entry != nullptr) {
+        found->epic_launcher_path = epic_entry->path;
+      }
       if (!owned.title.empty()) {
         found->title = owned.title;
       }
@@ -1044,6 +1078,8 @@ void Window::merge_epic_games() {
     Game game;
     game.app_id = "store:epic:" + owned.app_name;
     game.epic_app_name = owned.app_name;
+    game.epic_namespace = owned.namespace_id;
+    game.epic_catalog_id = owned.catalog_id;
     game.store_launcher_gameid = "epic-games";
     game.title = owned.title;
     game.source = "Epic";
@@ -1051,9 +1087,38 @@ void Window::merge_epic_games() {
     game.installed = false;
     game.cover_path = owned.cover_path;
     game.hero_path = owned.cover_path;
+    if (epic_entry != nullptr) {
+      game.epic_launcher_path = epic_entry->path;
+      game.library_path = epic_entry->prefix;
+      game.runner = epic_entry->runner;
+      game.launch_arguments = epic_entry->launch_arguments;
+      game.executable = epic_entry->path;
+    }
     game.flags = m_flags.get(game.app_id);
     m_games.push_back(std::move(game));
   }
+
+  // Epic launches go through the Epic client so ownership and DRM are handled
+  // by Epic itself. Fall back to the direct executable when no launcher is known.
+  for (Game& game : m_games) {
+    if (game.kind != GameKind::Store || game.source != "Epic" ||
+        game.epic_launcher_path.empty()) {
+      continue;
+    }
+    const std::string uri =
+        epic_launch_uri(game.epic_namespace, game.epic_catalog_id, game.epic_app_name);
+    if (!uri.empty()) {
+      game.launch_uri = uri;
+      game.install_uri =
+          epic_install_uri(game.epic_namespace, game.epic_catalog_id, game.epic_app_name);
+      game.store_uri = epic_store_uri(game.title);
+      if (game.install_uri.empty()) {
+        game.install_uri = game.store_uri;
+      }
+      game.executable = game.epic_launcher_path;
+    }
+  }
+
   apply_cached_covers();
   m_library.set_games(m_games);
 }

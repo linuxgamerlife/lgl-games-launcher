@@ -361,8 +361,9 @@ void DetailsView::set_game(const Game& game) {
                              : "Not installed. Play opens Steam's install prompt.");
   } else if (is_store) {
     m_installed.set_text(
-        game.installed ? "Installed through " + game.source + " in a Faugus prefix."
-                       : "Not installed. Play opens " + game.source + " so you can install it.");
+        game.installed
+            ? "Installed through " + game.source + " in a Faugus prefix."
+            : "Not installed. Install opens " + game.source + "'s installation options.");
   } else {
     m_installed.set_text("Installed locally through Faugus (" + game.source + ").");
   }
@@ -375,7 +376,7 @@ void DetailsView::set_game(const Game& game) {
                          escape_uri(game.title));
   m_playtime_value.set_text(format_playtime(game.playtime_minutes));
   if (is_store) {
-    m_play_button.set_label(game.executable.empty() ? "OPEN " + source : "▶  PLAY");
+    m_play_button.set_label(game.installed ? "▶  PLAY" : "INSTALL");
     m_manage_button.set_visible(!game.executable.empty());
   } else {
     m_play_button.set_label(m_is_steam && !game.installed ? "INSTALL IN STEAM" : "▶  PLAY");
@@ -388,8 +389,11 @@ void DetailsView::set_game(const Game& game) {
   if (m_completion_card != nullptr) {
     m_completion_card->set_visible(m_is_steam);
   }
-  m_manage_button.set_label(m_is_steam ? "MANAGE IN STEAM"
-                                       : (is_store ? "OPEN " + source : "OPEN FAUGUS"));
+  m_manage_button.set_label(m_is_steam
+                                ? "MANAGE IN STEAM"
+                                : (is_store ? (game.store_uri.empty() ? "OPEN " + source
+                                                                      : "STORE PAGE")
+                                            : "OPEN FAUGUS"));
   update_flags(game.flags);
 
   update_artwork(game);

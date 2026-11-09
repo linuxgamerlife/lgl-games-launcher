@@ -16,6 +16,9 @@ enum class StoreKind {
 struct StoreGame {
   std::string id;              // Stable per store id.
   std::string app_name;        // Epic AppName, when known.
+  std::string namespace_id;    // Epic catalog namespace.
+  std::string catalog_id;      // Epic catalog item id.
+  std::string launcher_path;   // Store launcher executable from Faugus.
   std::string title;
   std::string install_dir;     // Unix path.
   std::string executable;      // Unix path when known.
