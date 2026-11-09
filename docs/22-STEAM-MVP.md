@@ -42,12 +42,15 @@ documented.
 
 ### 1.3 Game details and metadata
 
-- Details page: cover, title, app id, install path, library path, last played, playtime,
-  tags.
-- Steam store page link.
-- Copy app id / launch command.
-- Local metadata only. IGDB, ProtonDB, SteamGridDB, achievements, regional titles and the
-  metadata editor are **not** in this MVP.
+- Rich details page: hero art, portrait cover, title, source, ProtonDB and PCGamingWiki
+  links, install state, Play/Favourite/Hide/Manage in Steam.
+- Organisation: status (Backlog/Playing/Completed/Abandoned), tags.
+- Stats: playtime, achievement count, completion percentage.
+- Steam achievements from the public Steam Community XML, with progress and per-achievement
+  status.
+- IGDB insights when the user supplies Twitch developer credentials: critic score, rushed,
+  main + extras and completionist estimates. The secret is stored in Secret Service.
+- SteamGridDB and the metadata editor are **not** in this MVP.
 
 ### 1.4 Launching
 

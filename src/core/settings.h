@@ -33,6 +33,9 @@ public:
   [[nodiscard]] int window_height() const;
   void set_window_height(int value);
 
+  [[nodiscard]] std::string igdb_client_id() const;
+  void set_igdb_client_id(const std::string& value);
+
   bool save();
 
 private:

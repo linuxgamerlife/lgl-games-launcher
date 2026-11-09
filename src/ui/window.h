@@ -1,8 +1,11 @@
 #pragma once
 
 #include "core/flags_store.h"
+#include "core/igdb.h"
+#include "core/library.h"
 #include "core/library.h"
 #include "core/settings.h"
+#include "core/steam_achievements.h"
 #include "core/steam.h"
 #include "ui/details_view.h"
 #include "ui/library_view.h"
@@ -18,12 +21,15 @@
 #include <gtkmm/headerbar.h>
 #include <gtkmm/image.h>
 #include <gtkmm/label.h>
+#include <gtkmm/dialog.h>
+#include <gtkmm/entry.h>
 #include <gtkmm/menubutton.h>
 #include <gtkmm/overlay.h>
 #include <gtkmm/revealer.h>
 #include <gtkmm/stack.h>
 
 #include <memory>
+#include <mutex>
 #include <thread>
 #include <string>
 #include <vector>
@@ -46,6 +52,10 @@ private:
   void apply_cached_covers();
   void show_notice(const std::string& text, bool error = false, bool sticky = false);
   void play(const std::string& app_id);
+  void set_status(const std::string& app_id, const std::string& status);
+  void load_igdb(const std::string& app_id);
+  void load_achievements(const std::string& app_id);
+  void show_connections();
   void toggle_favorite(const std::string& app_id, bool favorite);
   void toggle_hidden(const std::string& app_id, bool hidden);
   void set_tags(const std::string& app_id, const std::string& tags);
@@ -84,6 +94,18 @@ private:
   sigc::connection m_notice_timeout;
   Glib::Dispatcher m_artwork_dispatcher;
   std::jthread m_artwork_thread;
+  std::jthread m_igdb_thread;
+  std::jthread m_achievements_thread;
+  Glib::Dispatcher m_igdb_dispatcher;
+  Glib::Dispatcher m_achievements_dispatcher;
+  std::mutex m_metadata_mutex;
+  std::string m_pending_igdb_app;
+  IgdbInfo m_pending_igdb;
+  std::string m_pending_achievements_app;
+  SteamAchievementsResult m_pending_achievements;
+  std::unique_ptr<Gtk::Dialog> m_connections;
+  Gtk::Entry* m_igdb_client_id_entry = nullptr;
+  Gtk::Entry* m_igdb_secret_entry = nullptr;
 };
 
 } // namespace gameslauncher

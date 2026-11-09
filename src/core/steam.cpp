@@ -230,11 +230,11 @@ std::string find_cache_file(const std::string& root, const std::string& app_id,
                             const std::vector<std::string>& stems) {
   const fs::path cache = fs::path(root) / "appcache" / "librarycache";
   const fs::path app_cache = cache / app_id;
-  std::string found = find_named(app_cache, stems);
-  if (!found.empty()) {
-    return found;
-  }
   for (const std::string& stem : stems) {
+    const std::string found = find_named(app_cache, {stem});
+    if (!found.empty()) {
+      return found;
+    }
     for (const char* extension : {".jpg", ".png", ".webp", ".jpeg"}) {
       const fs::path candidate = cache / (app_id + "_" + stem + extension);
       std::error_code ec;
@@ -264,6 +264,39 @@ void collect_playtime(const vdf::Node& node, std::map<std::string, int>* playtim
       collect_playtime(child, playtime);
     }
   }
+}
+
+std::string steam_id_for_root(const std::string& root) {
+  std::error_code ec;
+  const fs::path login = fs::path(root) / "config" / "loginusers.vdf";
+  std::string error;
+  const auto contents = read_file(login, &error);
+  if (!contents) {
+    return {};
+  }
+  std::string parse_error;
+  const auto parsed = vdf::parse(*contents, &parse_error);
+  if (!parsed) {
+    return {};
+  }
+  const vdf::Node* users = parsed->child("users");
+  if (users == nullptr || !users->is_object) {
+    return {};
+  }
+  std::string first;
+  for (const auto& [id, user] : users->children) {
+    if (!user.is_object || id.size() < 10 ||
+        !std::all_of(id.begin(), id.end(), [](unsigned char ch) { return std::isdigit(ch) != 0; })) {
+      continue;
+    }
+    if (first.empty()) {
+      first = id;
+    }
+    if (user.string_value("MostRecent") == "1") {
+      return id;
+    }
+  }
+  return first;
 }
 
 std::map<std::string, int> playtime_for_root(const std::string& root) {
@@ -349,6 +382,9 @@ SteamScanResult SteamScanner::scan() {
 
   std::set<std::string> seen_apps;
   for (const std::string& root : result.roots) {
+    if (result.steam_id.empty()) {
+      result.steam_id = steam_id_for_root(root);
+    }
     const std::map<std::string, int> playtime = playtime_for_root(root);
     for (const std::string& library : library_paths(root, &result.warnings)) {
       std::error_code ec;

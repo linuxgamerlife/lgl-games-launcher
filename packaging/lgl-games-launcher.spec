@@ -18,6 +18,9 @@ BuildRequires:  pkgconfig(glib-2.0)
 BuildRequires:  pkgconfig(gio-2.0)
 BuildRequires:  pkgconfig(sqlite3)
 BuildRequires:  pkgconfig(libsoup-3.0)
+BuildRequires:  pkgconfig(json-glib-1.0)
+BuildRequires:  pkgconfig(libsecret-1)
+BuildRequires:  pkgconfig(libxml-2.0)
 BuildRequires:  desktop-file-utils
 BuildRequires:  appstream
 

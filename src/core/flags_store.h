@@ -10,6 +10,7 @@ struct GameFlags {
   bool favorite = false;
   bool hidden = false;
   std::string tags;
+  std::string status;
 };
 
 // Per-app user choices. The Steam manifests are the source of truth for the

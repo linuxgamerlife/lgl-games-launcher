@@ -1,6 +1,7 @@
 #include "ui/window.h"
 
 #include "core/artwork.h"
+#include "core/secret_store.h"
 #include "core/format.h"
 #include "core/launch.h"
 #include "core/paths.h"
@@ -8,6 +9,7 @@
 #include <adwaita.h>
 #include <giomm/menu.h>
 #include <glibmm/main.h>
+#include <gtkmm/grid.h>
 #include <gtkmm/separator.h>
 
 #include <algorithm>
@@ -36,6 +38,30 @@ Window::Window(const Glib::RefPtr<Gtk::Application>& application)
       if (const Game* game = find_game(m_details.current_app_id())) {
         m_details.set_game(*game);
       }
+    }
+  });
+  m_igdb_dispatcher.connect([this] {
+    std::string app_id;
+    IgdbInfo info;
+    {
+      std::lock_guard lock(m_metadata_mutex);
+      app_id = m_pending_igdb_app;
+      info = m_pending_igdb;
+    }
+    if (app_id == m_details.current_app_id()) {
+      m_details.set_igdb(info);
+    }
+  });
+  m_achievements_dispatcher.connect([this] {
+    std::string app_id;
+    SteamAchievementsResult result;
+    {
+      std::lock_guard lock(m_metadata_mutex);
+      app_id = m_pending_achievements_app;
+      result = m_pending_achievements;
+    }
+    if (app_id == m_details.current_app_id()) {
+      m_details.set_achievements(result);
     }
   });
 
@@ -80,6 +106,15 @@ Window::Window(const Glib::RefPtr<Gtk::Application>& application)
       [this](const std::string& app_id, bool value) { toggle_hidden(app_id, value); });
   m_details.signal_tags().connect(
       [this](const std::string& app_id, const std::string& tags) { set_tags(app_id, tags); });
+  m_details.signal_status().connect(
+      [this](const std::string& app_id, const std::string& status) {
+        set_status(app_id, status);
+      });
+  m_details.signal_refresh_igdb().connect(
+      [this](const std::string& app_id) { load_igdb(app_id); });
+  m_details.signal_refresh_achievements().connect(
+      [this](const std::string& app_id) { load_achievements(app_id); });
+  m_details.signal_connect_igdb().connect([this] { show_connections(); });
 
   std::string database_error;
   if (!m_flags.open(database_path(), &database_error)) {
@@ -109,6 +144,14 @@ Window::Window(const Glib::RefPtr<Gtk::Application>& application)
 }
 
 Window::~Window() {
+  if (m_igdb_thread.joinable()) {
+    m_igdb_thread.request_stop();
+    m_igdb_thread.join();
+  }
+  if (m_achievements_thread.joinable()) {
+    m_achievements_thread.request_stop();
+    m_achievements_thread.join();
+  }
   if (m_artwork_thread.joinable()) {
     m_artwork_thread.request_stop();
     m_artwork_thread.join();
@@ -151,6 +194,7 @@ void Window::build_header() {
 
   auto window_section = Gio::Menu::create();
   window_section->append("Use System Title Bar", "win.system-title-bar");
+  window_section->append("Connections…", "win.connections");
   menu->append_section(window_section);
 
   auto help_section = Gio::Menu::create();
@@ -167,6 +211,7 @@ void Window::build_header() {
   add_action("refresh", sigc::mem_fun(*this, &Window::refresh));
   add_action("search", [this] { m_library.focus_search(); });
   add_action("about", [this] { show_about(); });
+  add_action("connections", [this] { show_connections(); });
 
   m_title_action =
       Gio::SimpleAction::create_bool("system-title-bar", m_settings.system_title_bar());
@@ -280,6 +325,8 @@ void Window::open_game(const std::string& app_id) {
   }
   m_details.set_game(*game);
   m_stack.set_visible_child(m_details);
+  load_igdb(app_id);
+  load_achievements(app_id);
 }
 
 void Window::play(const std::string& app_id) {
@@ -347,7 +394,7 @@ void Window::update_game_flags(const std::string& app_id, const GameFlags& flags
   game->flags = flags;
   m_library.set_games(m_games);
   if (m_details.current_app_id() == app_id) {
-    m_details.set_game(*game);
+    m_details.update_flags(flags);
   }
 }
 
@@ -368,6 +415,174 @@ void Window::show_notice(const std::string& text, bool error, bool sticky) {
         },
         5000);
   }
+}
+
+void Window::set_status(const std::string& app_id, const std::string& status) {
+  Game* game = find_game(app_id);
+  if (game == nullptr) {
+    return;
+  }
+  GameFlags flags = game->flags;
+  flags.status = status;
+  update_game_flags(app_id, flags);
+}
+
+void Window::load_igdb(const std::string& app_id) {
+  if (app_id.empty()) {
+    return;
+  }
+  const std::string client_id = m_settings.igdb_client_id();
+  const std::string secret = SecretStore::lookup("igdb-client-secret");
+  if (client_id.empty() || secret.empty()) {
+    IgdbInfo info;
+    info.error = "Connect IGDB in Settings to see critic scores and length estimates.";
+    if (app_id == m_details.current_app_id()) {
+      m_details.set_igdb(info);
+    }
+    return;
+  }
+  if (app_id == m_details.current_app_id()) {
+    m_details.set_igdb_loading();
+  }
+  m_igdb_thread = std::jthread([this, app_id, client_id, secret](std::stop_token stop) {
+    IgdbClient client(client_id, secret);
+    IgdbInfo info;
+    std::string error;
+    if (!client.fetch(app_id, &info, &error)) {
+      info.error = error.empty() ? "IGDB data is unavailable." : error;
+    }
+    {
+      std::lock_guard lock(m_metadata_mutex);
+      m_pending_igdb_app = app_id;
+      m_pending_igdb = info;
+    }
+    if (!stop.stop_requested()) {
+      m_igdb_dispatcher.emit();
+    }
+  });
+}
+
+void Window::load_achievements(const std::string& app_id) {
+  if (app_id.empty()) {
+    return;
+  }
+  if (m_scan.steam_id.empty()) {
+    SteamAchievementsResult result;
+    result.error = "No Steam profile was found. Sign in to Steam once, then refresh.";
+    if (app_id == m_details.current_app_id()) {
+      m_details.set_achievements(result);
+    }
+    return;
+  }
+  if (app_id == m_details.current_app_id()) {
+    m_details.set_achievements_loading();
+  }
+  const std::string steam_id = m_scan.steam_id;
+  m_achievements_thread = std::jthread(
+      [this, app_id, steam_id](std::stop_token stop) {
+        SteamAchievementsResult result = fetch_steam_achievements(steam_id, app_id);
+        {
+          std::lock_guard lock(m_metadata_mutex);
+          m_pending_achievements_app = app_id;
+          m_pending_achievements = result;
+        }
+        if (!stop.stop_requested()) {
+          m_achievements_dispatcher.emit();
+        }
+      });
+}
+
+void Window::show_connections() {
+  if (!m_connections) {
+    m_connections = std::make_unique<Gtk::Dialog>();
+    m_connections->set_title("Connections");
+    m_connections->set_transient_for(*this);
+    m_connections->set_modal(true);
+    m_connections->set_default_size(480, -1);
+    m_connections->set_hide_on_close(true);
+    auto* content = m_connections->get_content_area();
+    content->set_margin(18);
+    content->set_spacing(12);
+
+    auto* note = Gtk::make_managed<Gtk::Label>(
+        "IGDB uses your Twitch developer client ID and secret. The secret is stored "
+        "in the desktop Secret Service, never in settings.ini.");
+    note->set_wrap(true);
+    note->set_xalign(0.0F);
+    note->add_css_class("muted");
+    content->append(*note);
+
+    auto* grid = Gtk::make_managed<Gtk::Grid>();
+    grid->set_row_spacing(8);
+    grid->set_column_spacing(12);
+    auto* id_label = Gtk::make_managed<Gtk::Label>("IGDB client ID");
+    id_label->set_xalign(0.0F);
+    grid->attach(*id_label, 0, 0, 1, 1);
+    m_igdb_client_id_entry = Gtk::make_managed<Gtk::Entry>();
+    m_igdb_client_id_entry->set_hexpand(true);
+    m_igdb_client_id_entry->set_text(m_settings.igdb_client_id());
+    grid->attach(*m_igdb_client_id_entry, 1, 0, 1, 1);
+    auto* secret_label = Gtk::make_managed<Gtk::Label>("IGDB client secret");
+    secret_label->set_xalign(0.0F);
+    grid->attach(*secret_label, 0, 1, 1, 1);
+    m_igdb_secret_entry = Gtk::make_managed<Gtk::Entry>();
+    m_igdb_secret_entry->set_hexpand(true);
+    m_igdb_secret_entry->set_visibility(false);
+    m_igdb_secret_entry->set_input_purpose(Gtk::InputPurpose::PASSWORD);
+    m_igdb_secret_entry->set_placeholder_text(
+        SecretStore::lookup("igdb-client-secret").empty()
+            ? "Twitch client secret"
+            : "Stored secret — leave blank to keep");
+    grid->attach(*m_igdb_secret_entry, 1, 1, 1, 1);
+    content->append(*grid);
+
+    m_connections->add_button("Remove", 2);
+    m_connections->add_button("Cancel", static_cast<int>(Gtk::ResponseType::CANCEL));
+    m_connections->add_button("Save", static_cast<int>(Gtk::ResponseType::OK));
+    m_connections->set_default_response(static_cast<int>(Gtk::ResponseType::OK));
+    m_connections->signal_response().connect([this](int response) {
+      if (response == static_cast<int>(Gtk::ResponseType::OK) && m_igdb_client_id_entry != nullptr &&
+          m_igdb_secret_entry != nullptr) {
+        m_settings.set_igdb_client_id(m_igdb_client_id_entry->get_text());
+        const std::string secret = m_igdb_secret_entry->get_text();
+        if (!secret.empty()) {
+          std::string error;
+          if (!SecretStore::store("igdb-client-secret", secret, &error)) {
+            show_notice("Could not store the IGDB secret: " + error, true);
+            return;
+          }
+        }
+        show_notice("IGDB connection saved.");
+        if (!m_details.current_app_id().empty()) {
+          load_igdb(m_details.current_app_id());
+        }
+      } else if (response == 2) {
+        m_settings.set_igdb_client_id({});
+        SecretStore::remove("igdb-client-secret");
+        if (m_igdb_client_id_entry != nullptr) {
+          m_igdb_client_id_entry->set_text({});
+        }
+        if (m_igdb_secret_entry != nullptr) {
+          m_igdb_secret_entry->set_text({});
+        }
+        show_notice("IGDB connection removed.");
+      }
+      if (m_connections) {
+        m_connections->set_visible(false);
+      }
+    });
+  }
+  if (m_igdb_client_id_entry != nullptr) {
+    m_igdb_client_id_entry->set_text(m_settings.igdb_client_id());
+  }
+  if (m_igdb_secret_entry != nullptr) {
+    m_igdb_secret_entry->set_text({});
+    m_igdb_secret_entry->set_placeholder_text(
+        SecretStore::lookup("igdb-client-secret").empty()
+            ? "Twitch client secret"
+            : "Stored secret — leave blank to keep");
+  }
+  m_connections->present();
 }
 
 void Window::show_about() {

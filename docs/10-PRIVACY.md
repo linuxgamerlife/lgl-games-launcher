@@ -63,7 +63,9 @@ enabled. The user can disable network artwork in Settings → Privacy.
 | Steam CDN (`shared.steamstatic.com`) | A Steam game has no local artwork | Steam App ID | Public artwork only |
 | Steam Web API (`api.steampowered.com`) | User stored an API key and opens achievements or refreshes | API key, Steam ID, App ID | Opt-in |
 | Steam owned games | User selects “Sync owned library” | API key, Steam ID | Opt-in |
-| IGDB (`api.igdb.com`, `id.twitch.tv`) | User supplied Twitch client ID/secret and requests metadata | Client credentials, game title/App ID, platform | Opt-in |
+| Steam Community achievements | A game is opened | Public Steam ID, app ID | No API key; profile must be public |
+| IGDB / Twitch OAuth | User connects IGDB and opens a game | Client ID/secret, app ID | Opt-in; secret in Secret Service |
+| IGDB (`api.igdb.com`, `id.twitch.tv`) | User supplied Twitch client ID/secret and requests metadata | Client credentials (OAuth body), game title/App ID | Opt-in |
 | ProtonDB (`www.protondb.com`) | Badges enabled and details open | Steam App ID | Off by default |
 | SteamGridDB (`www.steamgriddb.com`) | User supplied a key and requests portraits | API key, title/App ID | Opt-in; images only |
 | RetroAchievements (`retroachievements.org`) | User supplied username/key and opens a game | Username, matched game id | Opt-in; ROM hashes are computed locally |

@@ -179,3 +179,112 @@ button.gl-small {
 .empty-state {
   padding: 48px 24px;
 }
+
+/* Rich game details */
+.detail-hero-picture {
+  background: @gl_sunken;
+}
+
+.detail-hero-shade {
+  background-image: linear-gradient(to bottom, transparent 0%, alpha(@window_bg_color, 0.35) 45%, @window_bg_color 95%);
+}
+
+.detail-hero-content {
+  color: @window_fg_color;
+}
+
+.hero-back {
+  background: alpha(@window_bg_color, 0.55);
+  border: 1px solid @gl_border;
+}
+
+.detail-title {
+  font-family: "Adwaita Mono", "JetBrains Mono", monospace;
+  font-size: 2.4em;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: @window_fg_color;
+}
+
+.source-label {
+  font-family: "Adwaita Mono", "JetBrains Mono", monospace;
+  font-size: 0.82em;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  color: @gl_muted;
+}
+
+.gl-badge {
+  background: @gl_surface;
+  border: 1px solid @gl_border;
+  border-radius: 6px;
+  padding: 3px 9px;
+  font-family: "Adwaita Mono", "JetBrains Mono", monospace;
+  font-size: 0.72em;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  color: @window_fg_color;
+  text-decoration: none;
+}
+
+.gl-badge:hover {
+  background: @gl_hover;
+}
+
+.gl-badge.protondb {
+  color: @accent_bg_color;
+  border-color: color-mix(in srgb, @accent_bg_color 45%, @gl_border);
+}
+
+.detail-section {
+  margin-top: 12px;
+}
+
+.stat-card {
+  padding: 12px 14px;
+}
+
+.stat-value {
+  font-size: 1.5em;
+  font-weight: 700;
+}
+
+.achievement-row {
+  background: @gl_surface;
+  border: 1px solid @gl_border;
+  border-radius: 8px;
+  padding: 9px 11px;
+}
+
+.achievement-name {
+  font-weight: 600;
+}
+
+.achievement-desc {
+  color: @gl_muted;
+  font-size: 0.85em;
+}
+
+.achievement-status {
+  font-family: "Adwaita Mono", "JetBrains Mono", monospace;
+  font-size: 0.68em;
+  letter-spacing: 0.08em;
+  color: @gl_subtle;
+}
+
+.achievement-unlocked {
+  color: #067647;
+}
+
+.dark .achievement-unlocked {
+  color: #47cd89;
+}
+
+progressbar > trough > progress {
+  background-color: @accent_bg_color;
+}
+
+.achievement-icon {
+  font-size: 1.25em;
+  color: @gl_subtle;
+}

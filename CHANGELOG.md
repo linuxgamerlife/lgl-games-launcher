@@ -14,7 +14,9 @@ versioning once implementation starts.
   - local playtime from `localconfig.vdf`;
   - local Steam artwork, with a cached Steam CDN fallback for missing portraits;
   - responsive GTK library grid, search, sort, favourites, hidden games and tags;
-  - details page with install/library paths, last played, playtime and tags;
+  - rich details page with hero art, portrait cover, ProtonDB/PCGamingWiki links, install state,
+    favourites, hidden, status and tags;
+  - stats cards, Steam achievement progress and list, and optional IGDB insights;
   - Steam and Flatpak Steam launch;
   - single-instance GTK application, standard header bar, menu, About and settings.
 - Design package for the GTK 4 port of Omakade 1.18.0 to Fedora 44 with KineticWE and Noctalia.

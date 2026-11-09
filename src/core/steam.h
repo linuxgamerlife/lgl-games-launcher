@@ -25,6 +25,7 @@ struct SteamScanResult {
   std::vector<SteamGame> games;
   std::vector<std::string> roots;
   std::vector<std::string> warnings;
+  std::string steam_id;
   bool flatpak = false;
 };
 

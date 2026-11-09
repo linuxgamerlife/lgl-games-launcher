@@ -41,6 +41,7 @@ mandatory for core code.
 | GLib / GIO / GObject | `glib-2.0`, `gio-2.0` | `glib2-devel` | Base |
 | JSON-GLib | `json-glib-1.0` | `json-glib-devel` | JSON parsing |
 | SQLite | `sqlite3` | `sqlite-devel` | Library database |
+| libxml2 | `libxml-2.0` | `libxml2-devel` | Steam achievement XML |
 | libsoup 3 | `libsoup-3.0` | `libsoup3-devel` | HTTP |
 | libsecret | `libsecret-1` | `libsecret-devel` | Secret Service |
 | libzip | `libzip` | `libzip-devel` | Backup archives |

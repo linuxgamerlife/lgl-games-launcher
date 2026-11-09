@@ -29,6 +29,9 @@ pkg_check_modules(ADWAITA REQUIRED IMPORTED_TARGET libadwaita-1>=1.6)
 pkg_check_modules(GLIBMM REQUIRED IMPORTED_TARGET glibmm-2.68)
 pkg_check_modules(GIOMM REQUIRED IMPORTED_TARGET giomm-2.68)
 pkg_check_modules(LIBSOUP REQUIRED IMPORTED_TARGET libsoup-3.0)
+pkg_check_modules(JSONGLIB REQUIRED IMPORTED_TARGET json-glib-1.0)
+pkg_check_modules(LIBSECRET REQUIRED IMPORTED_TARGET libsecret-1)
+pkg_check_modules(LIBXML2 REQUIRED IMPORTED_TARGET libxml-2.0)
 find_package(SQLite3 REQUIRED)
 find_program(GLIB_COMPILE_RESOURCES glib-compile-resources REQUIRED)
 
@@ -53,9 +56,12 @@ add_library(lgl_launcher_core STATIC
   src/core/theme.cpp
   src/core/format.cpp
   src/core/artwork.cpp
+  src/core/secret_store.cpp
+  src/core/igdb.cpp
+  src/core/steam_achievements.cpp
 )
 target_include_directories(lgl_launcher_core PUBLIC ${PROJECT_SOURCE_DIR}/src)
-target_link_libraries(lgl_launcher_core PUBLIC PkgConfig::GLIBMM PkgConfig::GIOMM PkgConfig::LIBSOUP SQLite3::SQLite3)
+target_link_libraries(lgl_launcher_core PUBLIC PkgConfig::GLIBMM PkgConfig::GIOMM PkgConfig::LIBSOUP PkgConfig::JSONGLIB PkgConfig::LIBSECRET PkgConfig::LIBXML2 SQLite3::SQLite3)
 
 add_executable(lgl-games-launcher
   ${RESOURCE_C}

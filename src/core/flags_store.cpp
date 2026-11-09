@@ -60,7 +60,8 @@ bool FlagsStore::ensure_schema(std::string* error) {
       "app_id TEXT PRIMARY KEY NOT NULL,"
       "favorite INTEGER NOT NULL DEFAULT 0,"
       "hidden INTEGER NOT NULL DEFAULT 0,"
-      "tags TEXT NOT NULL DEFAULT ''"
+      "tags TEXT NOT NULL DEFAULT '',"
+      "status TEXT NOT NULL DEFAULT ''"
       ")";
   char* message = nullptr;
   const int result = sqlite3_exec(m_db, schema, nullptr, nullptr, &message);
@@ -71,6 +72,9 @@ bool FlagsStore::ensure_schema(std::string* error) {
     sqlite3_free(message);
     return false;
   }
+  // Existing MVP databases predate the status column.
+  sqlite3_exec(m_db, "ALTER TABLE steam_flags ADD COLUMN status TEXT NOT NULL DEFAULT ''",
+               nullptr, nullptr, nullptr);
   return true;
 }
 
@@ -80,7 +84,7 @@ GameFlags FlagsStore::get(const std::string& app_id) const {
     return flags;
   }
   sqlite3_stmt* statement = nullptr;
-  const char* sql = "SELECT favorite, hidden, tags FROM steam_flags WHERE app_id = ?1";
+  const char* sql = "SELECT favorite, hidden, tags, status FROM steam_flags WHERE app_id = ?1";
   if (sqlite3_prepare_v2(m_db, sql, -1, &statement, nullptr) != SQLITE_OK) {
     return flags;
   }
@@ -91,6 +95,10 @@ GameFlags FlagsStore::get(const std::string& app_id) const {
     const unsigned char* tags = sqlite3_column_text(statement, 2);
     if (tags != nullptr) {
       flags.tags = reinterpret_cast<const char*>(tags);
+    }
+    const unsigned char* status = sqlite3_column_text(statement, 3);
+    if (status != nullptr) {
+      flags.status = reinterpret_cast<const char*>(status);
     }
   }
   sqlite3_finalize(statement);
@@ -103,9 +111,10 @@ bool FlagsStore::set(const std::string& app_id, const GameFlags& flags) {
   }
   sqlite3_stmt* statement = nullptr;
   const char* sql =
-      "INSERT INTO steam_flags(app_id, favorite, hidden, tags) VALUES(?1, ?2, ?3, ?4) "
+      "INSERT INTO steam_flags(app_id, favorite, hidden, tags, status) "
+      "VALUES(?1, ?2, ?3, ?4, ?5) "
       "ON CONFLICT(app_id) DO UPDATE SET favorite = excluded.favorite, "
-      "hidden = excluded.hidden, tags = excluded.tags";
+      "hidden = excluded.hidden, tags = excluded.tags, status = excluded.status";
   if (sqlite3_prepare_v2(m_db, sql, -1, &statement, nullptr) != SQLITE_OK) {
     return false;
   }
@@ -113,6 +122,7 @@ bool FlagsStore::set(const std::string& app_id, const GameFlags& flags) {
   sqlite3_bind_int(statement, 2, flags.favorite ? 1 : 0);
   sqlite3_bind_int(statement, 3, flags.hidden ? 1 : 0);
   sqlite3_bind_text(statement, 4, flags.tags.c_str(), -1, SQLITE_TRANSIENT);
+  sqlite3_bind_text(statement, 5, flags.status.c_str(), -1, SQLITE_TRANSIENT);
   const bool ok = step_done(statement);
   sqlite3_finalize(statement);
   return ok;

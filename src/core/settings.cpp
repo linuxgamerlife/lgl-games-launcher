@@ -5,6 +5,7 @@
 #include <glib.h>
 
 #include <algorithm>
+#include <cctype>
 #include <sys/stat.h>
 
 namespace gameslauncher {
@@ -131,6 +132,35 @@ int Settings::window_height() const {
 void Settings::set_window_height(int value) {
   ensure_loaded();
   m_file->set_integer("window", "height", std::clamp(value, kMinHeight, kMaxHeight));
+  save();
+}
+
+std::string Settings::igdb_client_id() const {
+  try {
+    const std::string value = m_file->get_string("connections", "igdbClientId");
+    if (value.size() <= 64 &&
+        std::all_of(value.begin(), value.end(), [](unsigned char ch) {
+          return std::isalnum(ch) != 0;
+        })) {
+      return value;
+    }
+  } catch (const Glib::Error&) {
+  }
+  return {};
+}
+
+void Settings::set_igdb_client_id(const std::string& value) {
+  ensure_loaded();
+  std::string safe;
+  for (unsigned char ch : value) {
+    if (std::isalnum(ch) != 0) {
+      safe.push_back(static_cast<char>(ch));
+    }
+  }
+  if (safe.size() > 64) {
+    safe.resize(64);
+  }
+  m_file->set_string("connections", "igdbClientId", safe);
   save();
 }
 
