@@ -46,15 +46,15 @@ The current package release is **0.0.1-1**.
 
 ## Install
 
-The Fedora package is built from this repository. Install the RPM once a release or COPR
-build is published:
+LGL Games Launcher is published from the same COPR as the rest of the LGL toolkit:
 
 ```bash
-sudo dnf install ./lgl-games-launcher-0.0.1-1.fc44.x86_64.rpm
+sudo dnf copr enable linuxgamerlife/lgl-toolkit
+sudo dnf install lgl-games-launcher
 ```
 
-Launch **LGL Games Launcher** from the application menu. A COPR repository will be added
-when the first public build is published.
+Launch **LGL Games Launcher** from the application menu. The current package release is
+**0.0.1-1**.
 
 ---
 
@@ -84,36 +84,15 @@ when the first public build is published.
 
 ---
 
-## Local data
-
-| Data | Location |
-|---|---|
-| Settings | `$XDG_CONFIG_HOME/lgl-games-launcher/settings.ini` |
-| Personal flags database | `$XDG_DATA_HOME/lgl-games-launcher/library.sqlite3` |
-| Cover/achievement image cache | `$XDG_CACHE_HOME/lgl-games-launcher/` |
-
-Steam directories are read-only. LGL Games Launcher never writes to Steam's files.
-
-Optional IGDB credentials use the desktop Secret Service for the client secret. The client
-ID is stored in `settings.ini`. No secret is written to the database, logs or argv.
-
----
-
 ## Build from source
 
-Build inside the Fedora development container, not against the host libraries:
+Build from a checkout of this repository:
 
 ```bash
-distrobox enter fedora-dev1 -- bash -lc '
-  cd /run/host/development/projects/lgl-games-launcher
-  cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=OFF
-  cmake --build build -j"$(nproc)"
-'
-```
-
-Run it:
-
-```bash
+git clone https://github.com/linuxgamerlife/lgl-games-launcher.git
+cd lgl-games-launcher
+cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=OFF
+cmake --build build -j"$(nproc)"
 ./build/lgl-games-launcher
 ```
 
