@@ -38,7 +38,7 @@ find_program(GLIB_COMPILE_RESOURCES glib-compile-resources REQUIRED)
 set(RESOURCE_XML ${PROJECT_SOURCE_DIR}/data/lgl-games-launcher.gresource.xml)
 set(RESOURCE_C ${CMAKE_CURRENT_BINARY_DIR}/lgl-games-launcher-resources.c)
 set(RESOURCE_DEPS ${PROJECT_SOURCE_DIR}/data/style.css
-    ${PROJECT_SOURCE_DIR}/data/icons/lgl-games-launcher.svg)
+    ${PROJECT_SOURCE_DIR}/data/icons/lgl-games-launcher.png)
 add_custom_command(OUTPUT ${RESOURCE_C}
   COMMAND ${GLIB_COMPILE_RESOURCES} --generate-source --target=${RESOURCE_C}
           --sourcedir=${PROJECT_SOURCE_DIR}/data ${RESOURCE_XML}
@@ -81,8 +81,11 @@ install(FILES packaging/com.linuxgamerlife.lgl-games-launcher.desktop
   DESTINATION ${CMAKE_INSTALL_DATADIR}/applications)
 install(FILES packaging/com.linuxgamerlife.lgl-games-launcher.metainfo.xml
   DESTINATION ${CMAKE_INSTALL_DATADIR}/metainfo)
-install(FILES data/icons/lgl-games-launcher.svg
-  DESTINATION ${CMAKE_INSTALL_DATADIR}/icons/hicolor/scalable/apps)
+foreach(size IN ITEMS 48 64 128 256)
+  install(FILES packaging/icons/${size}x${size}.png
+    DESTINATION ${CMAKE_INSTALL_DATADIR}/icons/hicolor/${size}x${size}/apps
+    RENAME lgl-games-launcher.png)
+endforeach()
 install(FILES README.md CHANGELOG.md HELP.md
   DESTINATION ${CMAKE_INSTALL_DATADIR}/doc/lgl-games-launcher)
 

@@ -51,7 +51,10 @@ appstreamcli validate --no-net %{buildroot}%{_datadir}/metainfo/%{name}.metainfo
 %{_bindir}/%{name}
 %{_datadir}/applications/com.linuxgamerlife.%{name}.desktop
 %{_datadir}/metainfo/com.linuxgamerlife.%{name}.metainfo.xml
-%{_datadir}/icons/hicolor/scalable/apps/%{name}.svg
+%{_datadir}/icons/hicolor/48x48/apps/%{name}.png
+%{_datadir}/icons/hicolor/64x64/apps/%{name}.png
+%{_datadir}/icons/hicolor/128x128/apps/%{name}.png
+%{_datadir}/icons/hicolor/256x256/apps/%{name}.png
 
 %changelog
 * Sun Nov 08 2026 LinuxGamerLife - 0.1.0-1

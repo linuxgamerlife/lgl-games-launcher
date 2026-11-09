@@ -19,7 +19,7 @@ namespace gameslauncher {
 namespace {
 
 constexpr const char* kIconResource =
-    "/com/linuxgamerlife/gameslauncher/icons/lgl-games-launcher.svg";
+    "/com/linuxgamerlife/gameslauncher/icons/lgl-games-launcher.png";
 
 } // namespace
 
@@ -36,7 +36,7 @@ Window::Window(const Glib::RefPtr<Gtk::Application>& application)
     m_library.set_games(m_games);
     if (!m_details.current_app_id().empty()) {
       if (const Game* game = find_game(m_details.current_app_id())) {
-        m_details.set_game(*game);
+        m_details.update_artwork(*game);
       }
     }
   });

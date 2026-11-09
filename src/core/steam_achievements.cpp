@@ -1,5 +1,7 @@
 #include "core/steam_achievements.h"
 
+#include "core/artwork.h"
+
 #include <glib.h>
 #include <libsoup/soup.h>
 #include <libxml/parser.h>
@@ -111,6 +113,9 @@ SteamAchievementsResult fetch_steam_achievements(const std::string& steam_id,
           }
           if (achievement.unlocked && !open_icon.empty()) {
             achievement.icon_url = open_icon;
+          }
+          if (!achievement.icon_url.empty()) {
+            achievement.icon_path = artwork::fetch_image(achievement.icon_url);
           }
           if (achievement.name.empty()) {
             achievement.name = "Hidden achievement";

@@ -18,7 +18,9 @@ versioning once implementation starts.
     favourites, hidden, status and tags;
   - stats cards, Steam achievement progress and list, and optional IGDB insights;
   - Steam and Flatpak Steam launch;
-  - single-instance GTK application, standard header bar, menu, About and settings.
+  - single-instance GTK application, standard header bar, menu, About and settings;
+  - the supplied LGL Games Launcher icon at 48/64/128/256 and in the header/About;
+  - cached Steam achievement icons from the public Steam CDN.
 - Design package for the GTK 4 port of Omakade 1.18.0 to Fedora 44 with KineticWE and Noctalia.
 - Feasibility assessment, product scope, architecture, data model, UI specification and
   feature-parity matrix.

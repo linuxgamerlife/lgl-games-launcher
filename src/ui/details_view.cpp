@@ -352,32 +352,7 @@ void DetailsView::set_game(const Game& game) {
   m_playtime_value.set_text(format_playtime(game.steam.playtime_minutes));
   update_flags(game.flags);
 
-  std::string hero = game.steam.hero_path;
-  if (hero.empty() || !std::filesystem::is_regular_file(hero)) {
-    hero = game.steam.cover_path;
-  }
-  std::string cover = game.steam.cover_path;
-  if (cover.empty() || !std::filesystem::is_regular_file(cover)) {
-    cover = hero;
-  }
-  if (!hero.empty() && std::filesystem::is_regular_file(hero)) {
-    try {
-      m_hero_picture.set_filename(hero);
-    } catch (const Glib::Error&) {
-      m_hero_picture.set_resource("/com/linuxgamerlife/gameslauncher/icons/lgl-games-launcher.svg");
-    }
-  } else {
-    m_hero_picture.set_resource("/com/linuxgamerlife/gameslauncher/icons/lgl-games-launcher.svg");
-  }
-  if (!cover.empty() && std::filesystem::is_regular_file(cover)) {
-    try {
-      m_cover.set_filename(cover);
-    } catch (const Glib::Error&) {
-      m_cover.set_resource("/com/linuxgamerlife/gameslauncher/icons/lgl-games-launcher.svg");
-    }
-  } else {
-    m_cover.set_resource("/com/linuxgamerlife/gameslauncher/icons/lgl-games-launcher.svg");
-  }
+  update_artwork(game);
 
   m_igdb_status.set_text("IGDB data loads when a game is opened.");
   m_igdb_critic.set_text("—");
@@ -392,6 +367,35 @@ void DetailsView::set_game(const Game& game) {
   m_achievement_percent.set_text("");
   m_achievement_progress.set_fraction(0.0);
   clear_achievements();
+}
+
+void DetailsView::update_artwork(const Game& game) {
+  std::string hero = game.steam.hero_path;
+  if (hero.empty() || !std::filesystem::is_regular_file(hero)) {
+    hero = game.steam.cover_path;
+  }
+  std::string cover = game.steam.cover_path;
+  if (cover.empty() || !std::filesystem::is_regular_file(cover)) {
+    cover = hero;
+  }
+  if (!hero.empty() && std::filesystem::is_regular_file(hero)) {
+    try {
+      m_hero_picture.set_filename(hero);
+    } catch (const Glib::Error&) {
+      m_hero_picture.set_resource("/com/linuxgamerlife/gameslauncher/icons/lgl-games-launcher.png");
+    }
+  } else {
+    m_hero_picture.set_resource("/com/linuxgamerlife/gameslauncher/icons/lgl-games-launcher.png");
+  }
+  if (!cover.empty() && std::filesystem::is_regular_file(cover)) {
+    try {
+      m_cover.set_filename(cover);
+    } catch (const Glib::Error&) {
+      m_cover.set_resource("/com/linuxgamerlife/gameslauncher/icons/lgl-games-launcher.png");
+    }
+  } else {
+    m_cover.set_resource("/com/linuxgamerlife/gameslauncher/icons/lgl-games-launcher.png");
+  }
 }
 
 void DetailsView::update_flags(const GameFlags& flags) {
@@ -490,14 +494,23 @@ void DetailsView::set_achievements(const SteamAchievementsResult& result) {
   for (const SteamAchievement& achievement : result.achievements) {
     auto* item = Gtk::make_managed<Gtk::Box>(Gtk::Orientation::HORIZONTAL, 10);
     item->add_css_class("achievement-row");
-    auto* icon = Gtk::make_managed<Gtk::Label>(achievement.unlocked ? "✓" : "🔒");
-    icon->set_size_request(28, -1);
-    icon->set_xalign(0.5F);
-    icon->add_css_class("achievement-icon");
-    if (achievement.unlocked) {
-      icon->add_css_class("achievement-unlocked");
+    if (!achievement.icon_path.empty() &&
+        std::filesystem::is_regular_file(achievement.icon_path)) {
+      auto* image = Gtk::make_managed<Gtk::Image>();
+      image->set(achievement.icon_path);
+      image->set_pixel_size(32);
+      image->set_size_request(32, 32);
+      item->append(*image);
+    } else {
+      auto* icon = Gtk::make_managed<Gtk::Label>(achievement.unlocked ? "✓" : "🔒");
+      icon->set_size_request(28, -1);
+      icon->set_xalign(0.5F);
+      icon->add_css_class("achievement-icon");
+      if (achievement.unlocked) {
+        icon->add_css_class("achievement-unlocked");
+      }
+      item->append(*icon);
     }
-    item->append(*icon);
     auto* text = Gtk::make_managed<Gtk::Box>(Gtk::Orientation::VERTICAL, 2);
     text->set_hexpand(true);
     auto* name = Gtk::make_managed<Gtk::Label>(achievement.name);

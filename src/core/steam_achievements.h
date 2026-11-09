@@ -10,6 +10,7 @@ struct SteamAchievement {
   std::string name;
   std::string description;
   std::string icon_url;
+  std::string icon_path;
   bool unlocked = false;
   long long unlock_time = 0;
   bool hidden = false;

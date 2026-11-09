@@ -164,4 +164,110 @@ bool fetch_steam_cover(const std::string& app_id, std::string* path, std::string
   return false;
 }
 
+std::string image_cache_dir() {
+  return Glib::build_filename(cache_dir(), "images");
+}
+
+std::string url_hash(const std::string& url) {
+  gchar* hash = g_compute_checksum_for_string(G_CHECKSUM_SHA256, url.c_str(), -1);
+  std::string result = hash != nullptr ? hash : "";
+  g_free(hash);
+  return result;
+}
+
+bool allowed_image_url(const std::string& url) {
+  if (url.size() > 2048) {
+    return false;
+  }
+  for (const char* prefix : {"https://shared.fastly.steamstatic.com/",
+                             "https://shared.steamstatic.com/",
+                             "https://steamcdn-a.akamaihd.net/",
+                             "https://media.steampowered.com/",
+                             "https://cdn.akamai.steamstatic.com/",
+                             "https://steamcommunity-a.akamaihd.net/"}) {
+    if (url.rfind(prefix, 0) == 0) {
+      return true;
+    }
+  }
+  return false;
+}
+
+std::string cached_image_path(const std::string& url) {
+  if (!allowed_image_url(url)) {
+    return {};
+  }
+  const std::string hash = url_hash(url);
+  if (hash.empty()) {
+    return {};
+  }
+  for (const char* extension : {".jpg", ".png", ".webp"}) {
+    const std::string path = Glib::build_filename(image_cache_dir(), hash + extension);
+    if (g_file_test(path.c_str(), G_FILE_TEST_IS_REGULAR)) {
+      return path;
+    }
+  }
+  return {};
+}
+
+std::string fetch_image(const std::string& url, std::string* error) {
+  if (!allowed_image_url(url)) {
+    if (error != nullptr) {
+      *error = "image URL is not allowed";
+    }
+    return {};
+  }
+  const std::string existing = cached_image_path(url);
+  if (!existing.empty()) {
+    return existing;
+  }
+  if (!ensure_private_dir(image_cache_dir())) {
+    if (error != nullptr) {
+      *error = "could not create the image cache";
+    }
+    return {};
+  }
+  SoupSession* session = soup_session_new();
+  g_object_set(G_OBJECT(session), "timeout", kTimeoutSeconds, nullptr);
+  SoupMessage* message = soup_message_new("GET", url.c_str());
+  if (message == nullptr) {
+    g_object_unref(session);
+    if (error != nullptr) {
+      *error = "could not create the image request";
+    }
+    return {};
+  }
+  GError* request_error = nullptr;
+  GBytes* bytes = soup_session_send_and_read(session, message, nullptr, &request_error);
+  const guint status = soup_message_get_status(message);
+  const gsize size = bytes != nullptr ? g_bytes_get_size(bytes) : 0;
+  const guchar* data =
+      bytes != nullptr ? static_cast<const guchar*>(g_bytes_get_data(bytes, nullptr)) : nullptr;
+  const char* extension = data != nullptr ? image_extension(data, size) : nullptr;
+  std::string result;
+  if (request_error != nullptr) {
+    if (error != nullptr) {
+      *error = request_error->message;
+    }
+    g_error_free(request_error);
+  } else if (status != 200 || size == 0 || size > 4 * 1024 * 1024 || extension == nullptr) {
+    if (error != nullptr) {
+      *error = "image request failed or returned invalid data";
+    }
+  } else {
+    const std::string path =
+        Glib::build_filename(image_cache_dir(), url_hash(url) + extension);
+    if (write_private(path, data, size)) {
+      result = path;
+    } else if (error != nullptr) {
+      *error = "could not save the image";
+    }
+  }
+  if (bytes != nullptr) {
+    g_bytes_unref(bytes);
+  }
+  g_object_unref(message);
+  g_object_unref(session);
+  return result;
+}
+
 } // namespace gameslauncher::artwork

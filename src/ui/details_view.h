@@ -29,6 +29,7 @@ public:
 
   void set_game(const Game& game);
   void update_flags(const GameFlags& flags);
+  void update_artwork(const Game& game);
   void set_igdb_loading();
   void set_igdb(const IgdbInfo& info);
   void set_achievements_loading();
